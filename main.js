@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.1.010
+// VERSION 1.0.3.001
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -30,7 +30,18 @@ class yaminowplaying {
     // </style>
 
 
+    
+
+        convertToUniqueID(id) {
+            // Convert to lowercase and replace invalid CSS characters
+            id = id.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            // Encode as Base64 and remove padding characters
+            return 'ynp_' + btoa(id).replace(/=+$/, '');
+        }
+
+
         createNowPlayingBox(id, data) {
+            id = this.convertToUniqueID(id);
             // Clone the template
             let box = document.querySelector(this.element.template).cloneNode(true);
             box.classList.add("nowplay-box");
@@ -39,10 +50,12 @@ class yaminowplaying {
             box.querySelector(".nowplay-avatar").style.backgroundImage = "url(" + data.image + ")";
             box.style.display = "flex";
             document.querySelector(this.element.listarea).appendChild(box);
-            console.log("[WAYI] Created box for " + id);
+            console.log("[WAYI] Created box for " + id + ' (' + data.name + ')');
         }
 
         updateNowPlayingBox(id, data) {
+            // normalize the id to lowercase
+            id = this.convertToUniqueID(id);
             let box = document.querySelector(".nowplay-box-" + id);
             box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
             box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
@@ -58,7 +71,7 @@ class yaminowplaying {
             box.querySelector(".nowplay-time").querySelector("h2").textContent = timetext
             box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
             box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
-            console.log("[WAYI] Updated box for " + id);
+            console.log("[WAYI] Updated box for " + id + ' (' + data.track + ')');
         }
 
 
@@ -95,6 +108,7 @@ class yaminowplaying {
 
 
         removeNowPlayingBox(id) {
+            id = this.convertToUniqueID(id);
             let box = document.querySelector(".nowplay-box-" + id);
             box.remove();
             console.log("[WAYI] Removed box for " + id);
@@ -146,10 +160,20 @@ class yaminowplaying {
                 // {self.username} , data.{self.username}
                 this.updateNowPlayingBox(data.self.name, data[data.self.name][0]);
                 data.friends.forEach(friend => {
+                        //if data[friend.name][0] is undefined that means the data limit is reached (skip the user)
+                        if (typeof data[friend.name] === 'undefined') {
+                            console.log("[WAYI] Skipped " + friend.name + " because of data limit reached (Backend limit)");
+                            // Show the error message from data[error] if it's not undefined
+                            if (typeof data.error !== 'undefined') {
+                                console.log("[WAYI] Error from backend: " + data.error);
+                            }
+                            return;
+                        }
                         if (typeof this.data.createdBox[friend.name] === 'undefined') {
                             this.createNowPlayingBox(friend.name, friend);
                             this.data.createdBox[friend.name] = true;
                         }
+                        
                         this.updateNowPlayingBox(friend.name, data[friend.name][0]);
                         // if "" that means the user is playing something now so set the epoch to current epoch
                         let currentEpoch = data[friend.name][0].epoch == "" ? Math.floor(Date.now() / 1000) : data[friend.name][0].epoch;
@@ -177,9 +201,9 @@ class yaminowplaying {
             let sorted = this.orderByEpoch();
             let boxes = document.querySelectorAll(".nowplay-box");
             sorted.forEach((item, index) => {
-                let box = document.querySelector(".nowplay-box-" + item[0]);
+                let box = document.querySelector(".nowplay-box-" + this.convertToUniqueID(item[0]));
                 box.style.order = index;
-                console.log("[WAYI] Changed order of " + item[0] + " to " + index);
+                console.log("[WAYI] Changed order of " + item[0] + ' (' + this.convertToUniqueID(item[0]) + ') to ' + index);
             });
         }
 
@@ -210,3 +234,4 @@ if (username == undefined) {
 }
 
 var app = new yaminowplaying(username);
+
