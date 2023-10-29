@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.4.001
+// VERSION 1.0.4.002
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -60,13 +60,24 @@ class yaminowplaying {
             box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
             box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
             box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
-            box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
+            //The priority is image > album_image > alt_artist_image
+            if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
+                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.image + ")";
+                console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
+            } else if (data.album_image) {
+                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.album_image + ")";
+                console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
+            } else{
+                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.alt_artist_image + ")";
+                console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
+            }
+            // box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
             let timetext = this.timeSince(data.epoch);
-            let timediff = this.timeDiff(data.epoch);
+            let timediff = (this.timeDiff(data.epoch)/1000);
             if (timetext == "ฟังอยู่ตอนนี้") {
                 console.log("[WAYI] " + id + " is now playing (" + data.track + " - " + data.artist + ")");
                 box.classList.add("ynp-playing");
-            } else if (timediff < 120000) {
+            } else if (timediff < 180) { 
                 console.log("[WAYI] " + id + " is playing (" + data.track + " - " + data.artist + ") recently");
                 box.classList.add("ynp-playing");
             }
@@ -81,7 +92,10 @@ class yaminowplaying {
         }
 
 
-        timeDiff(epoch){
+        timeDiff(epoch=0) {
+            if (epoch == 0) {
+                return 0;
+            }
             let now = new Date();
             let then = new Date(epoch * 1000);
             let diff = now - then;
@@ -90,12 +104,7 @@ class yaminowplaying {
 
 
         timeSince(epoch) {
-            let diff = this.timeDiff(epoch);
-            // If the epoch is undefined or empty or the difference is less than 2 minutes
-            if (epoch == undefined || epoch == "" || diff < 120000) {
-                return "ฟังอยู่ตอนนี้";
-            }
-            
+            let diff = this.timeDiff(epoch);            
             let seconds = Math.floor(diff / 1000);
             let minutes = Math.floor(seconds / 60);
             let hours = Math.floor(minutes / 60);
@@ -103,6 +112,11 @@ class yaminowplaying {
             let weeks = Math.floor(days / 7);
             let months = Math.floor(days / 30);
             let years = Math.floor(days / 365);
+
+            // If the epoch is undefined or empty or the difference is less than 1 minutes
+            if (epoch == undefined || epoch == "" || seconds < 60) {
+                return "ฟังอยู่ตอนนี้";
+            }
             if (years > 0) {
                 return years + " ปีที่แล้ว";
             } else if (months > 0) {
@@ -248,3 +262,4 @@ if (username == undefined) {
 }
 
 var app = new yaminowplaying(username);
+
