@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.4.010
+// VERSION 1.0.5.001
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
