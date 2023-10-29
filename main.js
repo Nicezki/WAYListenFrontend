@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.3.001
+// VERSION 1.0.4.001
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -62,9 +62,15 @@ class yaminowplaying {
             box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
             box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
             let timetext = this.timeSince(data.epoch);
+            let timediff = this.timeDiff(data.epoch);
             if (timetext == "ฟังอยู่ตอนนี้") {
+                console.log("[WAYI] " + id + " is now playing (" + data.track + " - " + data.artist + ")");
                 box.classList.add("ynp-playing");
-            } else {
+            } else if (timediff < 120000) {
+                console.log("[WAYI] " + id + " is playing (" + data.track + " - " + data.artist + ") recently");
+                box.classList.add("ynp-playing");
+            }
+            else {
                 box.classList.remove("ynp-playing");
             }
                 
@@ -75,13 +81,21 @@ class yaminowplaying {
         }
 
 
-        timeSince(epoch) {
-            if (epoch == undefined || epoch == "") {
-                return "ฟังอยู่ตอนนี้";
-            }
+        timeDiff(epoch){
             let now = new Date();
             let then = new Date(epoch * 1000);
             let diff = now - then;
+            return diff;
+        }
+
+
+        timeSince(epoch) {
+            let diff = this.timeDiff(epoch);
+            // If the epoch is undefined or empty or the difference is less than 2 minutes
+            if (epoch == undefined || epoch == "" || diff < 120000) {
+                return "ฟังอยู่ตอนนี้";
+            }
+            
             let seconds = Math.floor(diff / 1000);
             let minutes = Math.floor(seconds / 60);
             let hours = Math.floor(minutes / 60);
@@ -234,4 +248,3 @@ if (username == undefined) {
 }
 
 var app = new yaminowplaying(username);
-
