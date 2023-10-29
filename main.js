@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.5.001
+// VERSION 1.0.5.002
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -48,12 +48,18 @@ class yaminowplaying {
             let box = document.querySelector(this.element.template).cloneNode(true);
             box.classList.add("nowplay-box");
             box.classList.add("nowplay-box-" + id);
+            box.classList.add("animated");
+            box.classList.add("bounceInUp");
             box.querySelector(".nowplay-name").querySelector("h2").textContent = data.name;
             box.querySelector(".nowplay-avatar").style.backgroundImage = "url(" + data.image + ")";
+            box.querySelector(".nowplay-songinfo").classList.add("animated");
+            box.querySelector(".nowplay-songinfo").classList.add("slideInUp");
             box.style.display = "flex";
+            box.style.visibility = "visible";
             document.querySelector(this.element.listarea).appendChild(box);
             console.log("[WAYI] Created box for " + id + ' (' + data.name + ')');
         }
+
 
         updateNowPlayingBox(id, data) {
             // normalize the id to lowercase
@@ -72,8 +78,16 @@ class yaminowplaying {
                 console.log("[WAYI] Skipped box for " + id + ' (' + data.track + ') because the data is the same');
                 return;
             }
+            //Else update the box
             if (currentTitle != data.track) {
                 box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
+                // If track is updated, Hide and show the title to make the animation
+                box.querySelector(".nowplay-songinfo").style.display = "none";
+                box.querySelector(".nowplay-songinfo").style.visibility = "hidden";
+                setTimeout(() => {
+                    box.querySelector(".nowplay-songinfo").style.display = "flex";
+                    box.querySelector(".nowplay-songinfo").style.visibility = "visible";
+                }, 100);
             }else{
                 console.log("[WAYI] Skipped title update for " + id + ' (' + data.track + ') because the data is the same');
             }
