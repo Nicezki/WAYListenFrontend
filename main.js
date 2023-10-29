@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.4.002
+// VERSION 1.0.4.010
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -16,7 +16,9 @@ class yaminowplaying {
             lastData : [],
             currentData : [],
             createdBox : [],
-            epochList : []
+            epochList : [],
+            currentOrder : [],
+            lastOrder : [],
         }
 
         this.init();
@@ -57,20 +59,40 @@ class yaminowplaying {
             // normalize the id to lowercase
             id = this.convertToUniqueID(id);
             let box = document.querySelector(".nowplay-box-" + id);
-            box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
-            box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
-            box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
-            //The priority is image > album_image > alt_artist_image
-            if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
-                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.image + ")";
-                console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
-            } else if (data.album_image) {
-                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.album_image + ")";
-                console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
-            } else{
-                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + data.alt_artist_image + ")";
-                console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
+            // Retreive the current data
+            let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
+            let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
+            let currentAlbum = box.querySelector(".nowplay-album").querySelector("h2").textContent;
+            let currentImage = window.getComputedStyle(box.querySelector(".nowplay-cover")).backgroundImage;
+            let currentImageURL = currentImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
+            let currentURL = box.querySelector(".nowplay-icon").querySelector("a").href;
+            let albumImage = this.albumImage(data,id);
+            // If the data is the same as the current data, skip the update
+            if (currentTitle == data.track && currentArtist == data.artist && currentAlbum == data.album && currentImageURL == albumImage && currentURL == data.URL) {
+                console.log("[WAYI] Skipped box for " + id + ' (' + data.track + ') because the data is the same');
+                return;
             }
+            if (currentTitle != data.track) {
+                box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
+            }else{
+                console.log("[WAYI] Skipped title update for " + id + ' (' + data.track + ') because the data is the same');
+            }
+            if (currentArtist != data.artist) {
+                box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
+            }else{
+                console.log("[WAYI] Skipped artist update for " + id + ' (' + data.track + ') because the data is the same');
+            }
+            if (currentAlbum != data.album) {
+                box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
+            }else{
+                console.log("[WAYI] Skipped album update for " + id + ' (' + data.track + ') because the data is the same');
+            }
+            if (currentImageURL != albumImage) {
+                box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + albumImage + ")";
+            }else{
+                console.log("[WAYI] Skipped album image update for " + id + ' (' + data.track + ') because the data is the same');
+            }
+
             // box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
             let timetext = this.timeSince(data.epoch);
             let timediff = (this.timeDiff(data.epoch)/1000);
@@ -89,6 +111,28 @@ class yaminowplaying {
             box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
             box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
             console.log("[WAYI] Updated box for " + id + ' (' + data.track + ')');
+        }
+
+
+        albumImage(data,id="Not Specified") {
+            //The priority is image > album_image > alt_artist_image
+            if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
+                console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
+                return data.image;
+                
+            } 
+            else if (data.album_image) {
+                console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
+                return data.album_image;
+            } 
+            else if (data.alt_artist_image) {
+                console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
+                return data.alt_artist_image;
+            }
+            else{
+                console.log("[WAYI] Fallback Using default image for " + id + ' (' + data.track + ')');
+                return "https://lastfm.freetls.fastly.net/i/u/300x300/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg";
+            }
         }
 
 
@@ -180,6 +224,11 @@ class yaminowplaying {
 
         compare(data) {
             this.data.currentData = data;
+            // If last data and current data is the same, skip the update
+            if (JSON.stringify(this.data.lastData) === JSON.stringify(this.data.currentData)) {
+                console.log("[WAYI] Skipped data update because the data is the same");
+                return;
+            }
             if (data !== this.data.lastData) {
                 if (typeof this.data.createdBox[data.self.name] === 'undefined') {
                     this.createSelfBox(data);
@@ -188,6 +237,7 @@ class yaminowplaying {
                 // {self.username} , data.{self.username}
                 this.updateNowPlayingBox(data.self.name, data[data.self.name][0]);
                 data.friends.forEach(friend => {
+                    // Compare the last data and current data
                         //if data[friend.name][0] is undefined that means the data limit is reached (skip the user)
                         if (typeof data[friend.name] === 'undefined') {
                             console.log("[WAYI] Skipped " + friend.name + " because of data limit reached (Backend limit)");
@@ -201,7 +251,6 @@ class yaminowplaying {
                             this.createNowPlayingBox(friend.name, friend);
                             this.data.createdBox[friend.name] = true;
                         }
-                        
                         this.updateNowPlayingBox(friend.name, data[friend.name][0]);
                         // if "" that means the user is playing something now so set the epoch to current epoch
                         let currentEpoch = data[friend.name][0].epoch == "" ? Math.floor(Date.now() / 1000) : data[friend.name][0].epoch;
@@ -227,12 +276,18 @@ class yaminowplaying {
 
         changeElementOrder() {
             let sorted = this.orderByEpoch();
+            this.data.currentOrder = sorted;
+            if (JSON.stringify(this.data.lastOrder) === JSON.stringify(this.data.currentOrder)) {
+                console.log("[WAYI] Skipped order update because the order is the same");
+                return;
+            }
             let boxes = document.querySelectorAll(".nowplay-box");
             sorted.forEach((item, index) => {
                 let box = document.querySelector(".nowplay-box-" + this.convertToUniqueID(item[0]));
                 box.style.order = index;
                 console.log("[WAYI] Changed order of " + item[0] + ' (' + this.convertToUniqueID(item[0]) + ') to ' + index);
             });
+            this.data.lastOrder = this.data.currentOrder;
         }
 
 
@@ -262,4 +317,3 @@ if (username == undefined) {
 }
 
 var app = new yaminowplaying(username);
-
