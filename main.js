@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.5.002
+// VERSION 1.0.6.001
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -58,8 +58,40 @@ class yaminowplaying {
             box.style.visibility = "visible";
             document.querySelector(this.element.listarea).appendChild(box);
             console.log("[WAYI] Created box for " + id + ' (' + data.name + ')');
+
+            //[1.0.6.001] Add event listener to the nowplay-usernamebox to go to the user's profile
+            box.querySelector(".nowplay-usernamebox").addEventListener("click", () => {
+                console.log("[WAYI] Go to " + id + ' (' + data.name + ') profile');
+                window.open(data.url, '_blank');
+            });
+
+            //[1.0.6.001] Add event listener to the nowplay-songinfo to go to the track's page
+            box.querySelector(".nowplay-songinfo").addEventListener("click", () => {
+                this.navigateToTrackPage(data.name);
+            });
+
+            //[1.0.6.001] Add cursor pointer to the nowplay-usernamebox and nowplay-songinfo
+            box.querySelector(".nowplay-usernamebox").style.cursor = "pointer";
+            box.querySelector(".nowplay-songinfo").style.cursor = "pointer";
+
         }
 
+
+
+        //[1.0.6.001] Because of <a> breaks the element in UI, we need to use this function to navigate to the track's page instead
+        navigateToTrackPage(username){
+            try{
+                //Get data from currentData
+                var data = this.data.currentData;
+                //Get the track data
+                var track = data[username][0];
+                //Navigate to the track page
+                window.open(track.URL, '_blank');
+            }catch(error){
+                console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
+                console.log(data);
+            }
+        }
 
         updateNowPlayingBox(id, data) {
             // normalize the id to lowercase
@@ -71,10 +103,10 @@ class yaminowplaying {
             let currentAlbum = box.querySelector(".nowplay-album").querySelector("h2").textContent;
             let currentImage = window.getComputedStyle(box.querySelector(".nowplay-cover")).backgroundImage;
             let currentImageURL = currentImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
-            let currentURL = box.querySelector(".nowplay-icon").querySelector("a").href;
+            // let currentURL = box.querySelector(".nowplay-icon").querySelector("a").href;
             let albumImage = this.albumImage(data,id);
             // If the data is the same as the current data, skip the update
-            if (currentTitle == data.track && currentArtist == data.artist && currentAlbum == data.album && currentImageURL == albumImage && currentURL == data.URL) {
+            if (currentTitle == data.track && currentArtist == data.artist && currentAlbum == data.album && currentImageURL == albumImage) {
                 console.log("[WAYI] Skipped box for " + id + ' (' + data.track + ') because the data is the same');
                 return;
             }
@@ -122,8 +154,8 @@ class yaminowplaying {
             }
                 
             box.querySelector(".nowplay-time").querySelector("h2").textContent = timetext
-            box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
-            box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
+            // box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
+            // box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
             console.log("[WAYI] Updated box for " + id + ' (' + data.track + ')');
         }
 
