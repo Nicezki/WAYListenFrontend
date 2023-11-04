@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.6.001
+// VERSION 1.0.7.001
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -120,6 +120,16 @@ class yaminowplaying {
                     box.querySelector(".nowplay-songinfo").style.display = "flex";
                     box.querySelector(".nowplay-songinfo").style.visibility = "visible";
                 }, 100);
+
+                //[1.0.7.001] Update the yt-icon-play link to the current track
+                if(data.yt_cover_image.url != undefined){
+                    box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/watch?v=" + data.yt_cover_image.url;
+                    box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
+                }else{
+                    box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/search?q=" + data.track + " " + data.artist;
+                    box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
+                }
+                
             }else{
                 console.log("[WAYI] Skipped title update for " + id + ' (' + data.track + ') because the data is the same');
             }
@@ -161,8 +171,13 @@ class yaminowplaying {
 
 
         albumImage(data,id="Not Specified") {
-            //The priority is image > album_image > alt_artist_image
-            if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
+            //[1.0.7.001] Add yt_cover_image to the priority
+            //The priority is yt(official) > image > album_image > yt (Unoffical) > alt_artist_image
+            if(data.yt_cover_image.offical == true){
+                console.log("[WAYI] Using Youtube official image for " + id + ' (' + data.track + ')');
+                return data.yt_cover_image.cover;
+            }    
+            else if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
                 console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
                 return data.image;
                 
@@ -170,7 +185,11 @@ class yaminowplaying {
             else if (data.album_image) {
                 console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
                 return data.album_image;
-            } 
+            }
+            else if(data.yt_cover_image.url != undefined){
+                console.log("[WAYI] Using Youtube unofficial image for " + id + ' (' + data.track + ')');
+                return data.yt_cover_image.cover;
+            }
             else if (data.alt_artist_image) {
                 console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
                 return data.alt_artist_image;
