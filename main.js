@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 1.0.7.001
+// VERSION 1.0.7.002
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.element = {
@@ -175,27 +175,59 @@ class yaminowplaying {
             //The priority is yt(official) > image > album_image > yt (Unoffical) > alt_artist_image
             if(data.yt_cover_image.offical == true){
                 console.log("[WAYI] Using Youtube official image for " + id + ' (' + data.track + ')');
+                // Add zoom class to the cover because the image having black bar on the top and bottom
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping adding zoom class");
+                }
                 return data.yt_cover_image.cover;
             }    
             else if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
                 console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping removing zoom class");
+                }
                 return data.image;
+                
                 
             } 
             else if (data.album_image) {
                 console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping removing zoom class");
+                }
                 return data.album_image;
             }
             else if(data.yt_cover_image.url != undefined){
                 console.log("[WAYI] Using Youtube unofficial image for " + id + ' (' + data.track + ')');
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping adding zoom class");
+                }
                 return data.yt_cover_image.cover;
             }
             else if (data.alt_artist_image) {
                 console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping removing zoom class");
+                }
                 return data.alt_artist_image;
             }
             else{
                 console.log("[WAYI] Fallback Using default image for " + id + ' (' + data.track + ')');
+                if(id != "Not Specified"){
+                    document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+                }else{
+                    console.log("[WAYI] ID is not specified, skipping removing zoom class");
+                }
                 return "https://lastfm.freetls.fastly.net/i/u/300x300/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg";
             }
         }
