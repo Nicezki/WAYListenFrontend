@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 2.0.0 DEV001
+// VERSION 2.0.0 DEV200 Pre-release 1
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.db = null;
@@ -68,10 +68,14 @@ class yaminowplaying {
             friendsV1 : [],
             recenttracks : [],
             lastrecenttracks : [],
+            lastOrder : [],
+            currentOrder : [],
             friendscount : 0,
             data : {},
             lastData : {},
             errorTimeout : 0,
+            reloadTime: 10000,
+            limitRateTime: 200,
         }
 
         this.templateElement.nowplaybox = document.querySelector(this.element.template).cloneNode(true);
@@ -83,6 +87,7 @@ class yaminowplaying {
 
 
         async init() {
+            this.addBtnEvent();
             this.hidePart(this.part.supporter);
             this.showScreen(this.screen.loading);
             this.showPart(this.part.loaddetail);
@@ -90,36 +95,71 @@ class yaminowplaying {
             this.changeLoadingText("กำลังเช็คสถานะฐานข้อมูล",0);
             this.changeLoadingText("Checking database status",1);
             this.initDB();
-            this.changeLoadingText("กำลังเช็คสถานะการเข้าสู่ระบบ",0);
-            this.changeLoadingText("Checking your login status...",1);
+            //If guest mode is true, skip login
+            if (this.data.guestMode != true) {
+                this.changeLoadingText("กำลังเช็คสถานะการเข้าสู่ระบบ",0);
+                this.changeLoadingText("Checking your login status...",1);
 
 
-            // Check if the user is logged in
-            await this.checkLoginStatus();
-            // If the login result is false, return
-            if (this.validYamiToken == false) {
-                console.log("[YAMILISTEN] Login result is false, skipping init");
-                this.showScreen(this.screen.login);
-                this.showPart(this.part.loginbtn,true);
-                return;
+                // Check if the user is logged in
+                await this.checkLoginStatus();
+                // If the login result is false, return
+                if (this.validYamiToken == false) {
+                    console.log("[YAMILISTEN] Login result is false, skipping init");
+                    this.showScreen(this.screen.login);
+                    this.showPart(this.part.loginbtn,true);
+                    return;
+                }
+            }else{
+                this.data.username = this.data.defaultusername;
+                console.log("[YAMILISTEN] Guest mode is true, skipping login");
+                //Slow update time
+                this.data.reloadTime = 15000;
+                this.data.limitRateTime = 1000;
             }
-
+            
             this.changeLoadingText("กำลังเช็คสถานะชื่อผู้ใช้ LastFM",0);
             this.changeLoadingText("Checking your LastFM username...",1);
-
             // Check if the lastFMUsername is present
             let lastfmUsernameStatus = this.checkLastfmUsernamePresent();
             // If the lastFMUsername is empty, show the login screen
             if (lastfmUsernameStatus == 2) {
                 console.log("[YAMILISTEN] LastFM username is empty, showing login screen");
                 this.showScreen(this.screen.login);
+                //Change text in setlastfm part
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "You didn't set your Last.fm username in Yami Community";
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "คุณยังไม่ได้ตั้งชื่อผู้ใช้ LastFM ใน Yami Community";
                 this.showPart(this.part.setlastfm,true);
-                this.hidePart(this.part.loginbtn);
+                this.hidePart(this.part.loginbtn);  
             }else if (lastfmUsernameStatus == 1) {
                 console.log("[YAMILISTEN] LastFM username is present, check if the username is valid");
                 this.changeLoadingText("กำลังเช็คสถานะผู้ใช้ "+this.data.username+" ใน LastFM",0);
                 this.changeLoadingText("Checking your LastFM username (" + this.data.username + ")...",1);
-                await this.getMyLastFMProfile();
+                let lastfmResult =  await this.getMyLastFMProfile();
+                // If the result is false, show the login screen
+                if (lastfmResult == false) {
+                    console.log("[YAMILISTEN] LastFM username is invalid, showing login screen");
+                    this.showScreen(this.screen.login);
+                    //Change text in setlastfm part
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                    this.showPart(this.part.setlastfm,true);
+                    this.hidePart(this.part.loginbtn);
+                    return;
+                }
+            }
+
+            // Check if the profile is empty
+            if (this.data.profile == {} || this.data.profile == undefined || this.data.profile == null) {
+                console.log("[YAMILISTEN] Profile is empty, skipping init");
+                //Change text in setlastfm part
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                this.showScreen(this.screen.login);
+                this.showPart(this.part.setlastfm,true);
+                this.hidePart(this.part.loginbtn);
+                
+                return;
             }
 
             this.changeLoadingText("กำลังเช็คสถานะเพื่อนของ "+this.data.username+" ใน LastFM",0);
@@ -130,19 +170,51 @@ class yaminowplaying {
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,true,true);
             this.createAllNowPlayingBox();
             this.updateAllNowPlayingBox();
+            this.changeBoxOrder();
             this.showScreen(this.screen.listen);
+
+            this.data.reloadTime = this.calculateTimeToWait();
 
             // Refresh every 10 seconds
             setInterval(() => {
                 console.log("[YAMILISTEN] Refreshing...");
                 this.refresh();
-            }, 10000);
+            }, this.data.reloadTime);
+        }
+
+
+        // Add button event listener
+        addBtnEvent() {
+            document.querySelector(this.btn.login).addEventListener("click", () => {
+                this.loginWithYami();
+            });
+            document.querySelector(this.btn.guest).addEventListener("click", () => {
+                this.data.guestMode = true;
+                this.init();
+            });
+            document.querySelector(this.btn.setlastfm).addEventListener("click", () => {
+                this.setLastfmUsernameFronYami();
+            });
         }
 
         async refresh() {
             this.data.lastData = this.data.recenttracks;
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,false,true);
             this.updateAllNowPlayingBox();
+            this.changeBoxOrder();
+        }
+
+        navigateToTrackPage(username){
+            try{
+                //Get data from currentData
+                var data = this.data.recenttracks[username]["track"][0];
+
+                //Navigate to the track page
+                window.open(data.url, '_blank');
+            }catch(error){
+                console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
+                console.log("[WAYI] Data: " + data);
+            }
         }
 
 
@@ -163,7 +235,7 @@ class yaminowplaying {
         loginWithYami() {
                 console.log("[YAMILISTEN] Login Process started");
                 // Open Yami login page in a popup window
-                const popup = window.open("https://cynthia.yami.one/auth/preauth?redirect=https://nicezki.com/listen&checkback=https://nicezki.com/yamic/checkback/inline", "Yami Login", "width=500,height=500");
+                const popup = window.open("https://cynthia.yami.one/auth/preauth?redirect=https://nicezki.com/listen&checkback=https://nicezki.com/yamic/checkback/inline", "Yami Login", "width=800,height=800");
                 const interval = setInterval(() => {
                     if (popup.closed) {
                         clearInterval(interval);
@@ -175,10 +247,34 @@ class yaminowplaying {
                         }else{
                             console.log("[YAMILISTEN] Yami token is seem valid, loading friends");
                             this.getYamiUserData();
+                            this.init();
                         }
                     }
                 }, 500);
         }
+
+        setLastfmUsernameFronYami() {
+            console.log("[YAMILISTEN] Setting LastFM username from Yami process started");
+            // Open Yami login page in a popup window
+            //https://yami.one/profile/1-nicezki/edit/ (Obtain the url from data.yamiuserdata.profileUrl)
+            const popup = window.open(this.data.yamiuserdata.profileUrl + "/edit/#form_header_core_pfieldgroups_15", "Yami Login", "width=1000,height=1700");
+            const interval = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(interval);
+                    console.log('[YAMILISTEN] Popup window closed');
+                    // Check if the Yami token is empty
+                    if (this.getCookie("yami_token") == "" || this.getCookie("yami_token") == undefined || this.getCookie("yami_token") == null) {
+                        console.log("[YAMILISTEN] Yami token is empty, skipping login");
+                        return;
+                    }else{
+                        console.log("[YAMILISTEN] Yami token is seem valid, loading friends");
+                        this.getYamiUserData();
+                        this.init();
+                    }
+                }
+            }, 500);
+        }
+        
 
         async getYamiUserData() {
             // Get the Yami token from the cookie
@@ -241,6 +337,10 @@ class yaminowplaying {
             if (data.supporter == 2) {
                 console.log("[YAMILISTEN] Thank you very much for supporting Yami Community! <3");
                 console.log("[YAMILISTEN] You are a Yami Supporter II");
+                console.log("[YAMILISTEN] The time to wait is 10 seconds for all friends");
+                this.data.reloadTime = 10000;
+                console.log("[YAMILISTEN] The rate limit time is 75ms");
+                this.data.limitRateTime = 75;
                 //Set text in supporter part
                 //document.querySelector(app.part.supporter).querySelectorAll("h2")[0].textContent
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[0].textContent = "SUPPORTER II";
@@ -271,6 +371,14 @@ class yaminowplaying {
             // Check from this.data.yamiuserdata if the lastFMUsername is empty
             // return 0 if not logged in, 1 if logged in and lastFMUsername is not empty, 2 if logged in but lastFMUsername is empty
             // Check first if data.yamiuserdata is empty
+            // If guest mode is true, skip the check
+            if (this.data.guestMode == true) {
+                console.log("[YAMILISTEN] Guest mode is true, skipping check for LastFM username");
+                console.log("[YAMILISTEN] Defaulting to default username (" + this.data.defaultusername + ")")
+                this.data.username = this.data.defaultusername;
+                return 1;
+            }
+
             if (this.data.yamiuserdata == {}){
                 console.log("[YAMILISTEN] Yami user data is empty, skipping check for LastFM username");
                 console.log("[YAMILISTEN] Defaulting to default username (" + this.data.defaultusername + ")");
@@ -294,6 +402,10 @@ class yaminowplaying {
             try {
                 const response = await fetch(this.data.lastfmpath + this.data.lastfmsubpath.usergetinfo + username + "&api_key=" + this.data.apikey + "&format=json");
                 if (!response.ok) {
+                    if (response.status == 404) {
+                        console.log("[YAMILISTEN] The user " + username + " is not found");
+                        return false;
+                    }
                     throw new Error(`[YAMILISTEN] HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
@@ -332,6 +444,11 @@ class yaminowplaying {
                 }
             } catch (error) {
                 console.error('[YAMILISTEN] Error fetching friends:', error);
+                //If it's 404, return false
+                if (error == "Error: [YAMILISTEN] HTTP error! status: 404") {
+                    console.log("[YAMILISTEN] The user " + username + " is not found");
+                    return false;
+                }
                 this.data.errorTimeout++;
                 if (this.data.errorTimeout > 5) {
                     console.log("[YAMILISTEN] Error timeout reached, skipping getting friends");
@@ -406,8 +523,8 @@ class yaminowplaying {
         async getMyLastFMProfile() {
             // If the data is empty, return false
             let data = await this.getLastfmProfile(this.data.username);
-            if (data == "") {
-                console.log("[YAMILISTEN] LastFM profile data is empty, skipping process profile");
+            if (data == "" || data == undefined || data == null) {
+                console.log("[YAMILISTEN] LastFM profile data is empty, returning to login screen");
                 return false;
             }
             // Else, process the data
@@ -439,6 +556,7 @@ class yaminowplaying {
                 return await this.getRecentTracks(username,raw,limit);
             }
         }
+        
 
 
         // Get the recent tracks of the all friends
@@ -454,8 +572,8 @@ class yaminowplaying {
             // Loop through all friends
             for (let key in this.data.friends) {
                 // Rate limit
-                console.log("[YAMILISTEN] Slow down, waiting for 50ms");
-                await new Promise(resolve => setTimeout(resolve, 50));
+                console.log("[YAMILISTEN] Slow down, waiting for " + this.data.limitRateTime + "ms");
+                await new Promise(resolve => setTimeout(resolve, this.data.limitRateTime));
                 console.log("[YAMILISTEN] Getting recent tracks of " + this.data.friends[key].name);
                 if (annouce) {
                     this.changeLoadingText("กำลังเช็คเพลงล่าสุดของ " + this.data.friends[key].name,0);
@@ -530,6 +648,11 @@ class yaminowplaying {
         createNowPlayingBox(username) {
             console.log("[YAMILISTEN] Creating box for " + username);
             username = this.fixName(username);
+            //Check if user have the song 
+            if (this.data.recenttracks[username]["track"][0] == undefined) {
+                console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping create box");
+                return;
+            }
             let box = this.templateElement.nowplaybox.cloneNode(true);
             box.classList.add("nowplay-box");
             box.classList.add("nowplay-box-" + username);
@@ -546,6 +669,22 @@ class yaminowplaying {
             }
             box.querySelector(".nowplay-songinfo").classList.add("animated");
             box.querySelector(".nowplay-songinfo").classList.add("slideInUp");
+            box.querySelector(".nowplay-usernamebox").addEventListener("click", () => {
+                console.log("[WAYI] Go to " + username + "'s profile");
+                if(username == this.data.profile.name.toLowerCase())
+                window.open(this.data.profile.url, '_blank');
+                else{
+                window.open(this.data.friends[username].url, '_blank');
+                }
+            });
+
+            box.querySelector(".nowplay-songinfo").addEventListener("click", () => {
+                this.navigateToTrackPage(username);
+            });
+
+            box.querySelector(".nowplay-usernamebox").style.cursor = "pointer";
+            box.querySelector(".nowplay-songinfo").style.cursor = "pointer";
+
             box.style.display = "flex";
             box.style.visibility = "visible";
             document.querySelector(this.element.listarea).appendChild(box);
@@ -554,8 +693,11 @@ class yaminowplaying {
 
         async updateNowPlayingBox(username) {
             try {
-                
                 username = this.fixName(username);
+                if (this.data.recenttracks[username]["track"][0] == undefined) {
+                    console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping update box");
+                    return;
+                }
                 let box = document.querySelector(".nowplay-box-" + username);
                 let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
                 let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
@@ -614,6 +756,46 @@ class yaminowplaying {
             }
         }
 
+        orderByEpoch() {
+            let sorted = [];
+            //can use getListeningEpoch(username) and select box by username
+            for (let key in this.data.recenttracks) {
+                //If zero change to current time
+                if (this.getListeningEpoch(key) == 0) {
+                    sorted.push([key, Date.now()]);
+                    continue;
+                }
+                sorted.push([key, this.getListeningEpoch(key)]);
+            }
+            sorted.sort(function(a, b) {
+                return a[1] - b[1];
+            });
+            return sorted.reverse();
+        }
+
+        changeBoxOrder() {
+            let sorted = this.orderByEpoch();
+            this.data.currentOrder = sorted;
+            if (JSON.stringify(this.data.lastOrder) === JSON.stringify(this.data.currentOrder)) {
+                console.log("[YAMILISTEN] Skipped order update because the order is the same");
+                return;
+            }
+            let boxes = document.querySelectorAll(".nowplay-box");
+            sorted.forEach((item, index) => {
+                // If the box is not present, skip the update
+                if (document.querySelector(".nowplay-box-" + this.fixName(item[0])) == null) {
+                    console.log("[YAMILISTEN] Skipped order update because the box is not present");
+                    return;
+                }
+                let box = document.querySelector(".nowplay-box-" + this.fixName(item[0]));
+                box.style.order = index;
+                console.log("[YAMILISTEN] Changed order of " + item[0] + ' (' + this.fixName(item[0]) + ') to ' + index);
+            });
+            this.data.lastOrder = this.data.currentOrder;
+
+
+        }
+
         createAllNowPlayingBox() {
             // Loop through all friends including self
             //Self
@@ -630,6 +812,22 @@ class yaminowplaying {
             }
         }
 
+        calculateTimeToWait() {
+            //Calculate the time to wait (friendnum (max 30) * 1000ms)
+            //If the time to wait is more than 20 seconds, set it to 20 seconds
+            let i = this.data.friendscount;
+            let timeToWait = (i * 1.5) * 500;
+            if (timeToWait > 20000) {
+                timeToWait = 20000;
+            }
+            //If the time to wait is less than 10 seconds, set it to 10 seconds
+            if (timeToWait < 10000) {
+                timeToWait = 10000;
+            }
+            console.log("[YAMILISTEN] [Qouta] According to the number of friends (" + i + "), the time to wait is " + timeToWait + "ms");
+            return timeToWait;
+        }
+        
 
         updateAllNowPlayingBox() {
             // Loop through all friends including self
@@ -641,6 +839,8 @@ class yaminowplaying {
             let i = 0;
             for (let key in this.data.friends) {
                 if (i > 30) {
+                    console.log("[YAMILISTEN] Time to wait for " + key + " is " + timeToWait + "ms");
+
                     console.log("[YAMILISTEN] More than 30 friends, skipping update all other boxes");
                     break;
                 }
@@ -742,12 +942,17 @@ class yaminowplaying {
 
         getListeningEpoch(username) {
             username = this.fixName(username);
+            //Handle no song 
+            if (this.data.recenttracks[username]["track"][0] == undefined) {
+                console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping get listening epoch");
+                return 0;
+            }
             //'epoch' => isset($track['date']['uts']) ? $track['date']['uts'] : '',
             //this date array can be gone if the user is listening to the song right now
             if (this.data.recenttracks[username]["track"][0]["date"] == undefined) {
                 return 0;
             }else{
-                return this.data.recenttracks[username]["track"][0]["date"]["uts"] ?? 0;
+                return parseInt(this.data.recenttracks[username]["track"][0]["date"]["uts"]) ?? 0;
             }
         }
 
@@ -1224,3 +1429,370 @@ if(window.location.href.indexOf("preview") == -1){
 }else{
     console.log("Test environment detected - not running code");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// REF only from V1
+// Obsolete
+
+        // createNowPlayingBox(id, data) {
+        //     id = this.convertToUniqueID(id);
+        //     // Clone the template
+        //     let box = document.querySelector(this.element.template).cloneNode(true);
+        //     box.classList.add("nowplay-box");
+        //     box.classList.add("nowplay-box-" + id);
+        //     box.classList.add("animated");
+        //     box.classList.add("bounceInUp");
+        //     box.querySelector(".nowplay-name").querySelector("h2").textContent = data.name;
+        //     box.querySelector(".nowplay-avatar").style.backgroundImage = "url(" + data.image + ")";
+        //     box.querySelector(".nowplay-songinfo").classList.add("animated");
+        //     box.querySelector(".nowplay-songinfo").classList.add("slideInUp");
+        //     box.style.display = "flex";
+        //     box.style.visibility = "visible";
+        //     document.querySelector(this.element.listarea).appendChild(box);
+        //     console.log("[WAYI] Created box for " + id + ' (' + data.name + ')');
+
+        //     //[1.0.6.001] Add event listener to the nowplay-usernamebox to go to the user's profile
+        //     box.querySelector(".nowplay-usernamebox").addEventListener("click", () => {
+        //         console.log("[WAYI] Go to " + id + ' (' + data.name + ') profile');
+        //         window.open(data.url, '_blank');
+        //     });
+
+        //     //[1.0.6.001] Add event listener to the nowplay-songinfo to go to the track's page
+        //     box.querySelector(".nowplay-songinfo").addEventListener("click", () => {
+        //         this.navigateToTrackPage(data.name);
+        //     });
+
+        //     //[1.0.6.001] Add cursor pointer to the nowplay-usernamebox and nowplay-songinfo
+        //     box.querySelector(".nowplay-usernamebox").style.cursor = "pointer";
+        //     box.querySelector(".nowplay-songinfo").style.cursor = "pointer";
+
+        // }
+
+
+
+        // //[1.0.6.001] Because of <a> breaks the element in UI, we need to use this function to navigate to the track's page instead
+        // navigateToTrackPage(username){
+        //     try{
+        //         //Get data from currentData
+        //         var data = this.data.currentData;
+        //         //Get the track data
+        //         var track = data[username][0];
+        //         //Navigate to the track page
+        //         window.open(track.URL, '_blank');
+        //     }catch(error){
+        //         console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
+        //         console.log(data);
+        //     }
+        // }
+
+        // updateNowPlayingBox(id, data) {
+        //     // normalize the id to lowercase
+        //     id = this.convertToUniqueID(id);
+        //     let box = document.querySelector(".nowplay-box-" + id);
+        //     // Retreive the current data
+        //     let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
+        //     let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
+        //     let currentAlbum = box.querySelector(".nowplay-album").querySelector("h2").textContent;
+        //     let currentImage = window.getComputedStyle(box.querySelector(".nowplay-cover")).backgroundImage;
+        //     let currentImageURL = currentImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
+        //     // let currentURL = box.querySelector(".nowplay-icon").querySelector("a").href;
+        //     let albumImage = this.albumImage(data,id);
+        //     // If the data is the same as the current data, skip the update
+        //     if (currentTitle == data.track && currentArtist == data.artist && currentAlbum == data.album && currentImageURL == albumImage) {
+        //         console.log("[WAYI] Skipped box for " + id + ' (' + data.track + ') because the data is the same');
+        //         return;
+        //     }
+        //     //Else update the box
+        //     if (currentTitle != data.track) {
+        //         box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
+        //         // If track is updated, Hide and show the title to make the animation
+        //         box.querySelector(".nowplay-songinfo").style.display = "none";
+        //         box.querySelector(".nowplay-songinfo").style.visibility = "hidden";
+        //         setTimeout(() => {
+        //             box.querySelector(".nowplay-songinfo").style.display = "flex";
+        //             box.querySelector(".nowplay-songinfo").style.visibility = "visible";
+        //         }, 100);
+
+        //         //[1.0.7.001] Update the yt-icon-play link to the current track
+        //         if(data.yt_cover_image.url != undefined){
+        //             box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/watch?v=" + data.yt_cover_image.url;
+        //             box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
+        //         }else{
+        //             box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/search?q=" + data.track + " " + data.artist;
+        //             box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
+        //         }
+                
+        //     }else{
+        //         console.log("[WAYI] Skipped title update for " + id + ' (' + data.track + ') because the data is the same');
+        //     }
+        //     if (currentArtist != data.artist) {
+        //         box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
+        //     }else{
+        //         console.log("[WAYI] Skipped artist update for " + id + ' (' + data.track + ') because the data is the same');
+        //     }
+        //     if (currentAlbum != data.album) {
+        //         box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
+        //     }else{
+        //         console.log("[WAYI] Skipped album update for " + id + ' (' + data.track + ') because the data is the same');
+        //     }
+        //     if (currentImageURL != albumImage) {
+        //         box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + albumImage + ")";
+        //     }else{
+        //         console.log("[WAYI] Skipped album image update for " + id + ' (' + data.track + ') because the data is the same');
+        //     }
+
+        //     // box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
+        //     let timetext = this.timeSince(data.epoch);
+        //     let timediff = (this.timeDiff(data.epoch)/1000);
+        //     if (timetext == "ฟังอยู่ตอนนี้") {
+        //         console.log("[WAYI] " + id + " is now playing (" + data.track + " - " + data.artist + ")");
+        //         box.classList.add("ynp-playing");
+        //     } else if (timediff < 180) { 
+        //         console.log("[WAYI] " + id + " is playing (" + data.track + " - " + data.artist + ") recently");
+        //         box.classList.add("ynp-playing");
+        //     }
+        //     else {
+        //         box.classList.remove("ynp-playing");
+        //     }
+                
+        //     box.querySelector(".nowplay-time").querySelector("h2").textContent = timetext
+        //     // box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
+        //     // box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
+        //     console.log("[WAYI] Updated box for " + id + ' (' + data.track + ')');
+        // }
+
+
+        // albumImage(data,id="Not Specified") {
+        //     //[1.0.7.001] Add yt_cover_image to the priority
+        //     //The priority is yt(official) > image > album_image > yt (Unoffical) > alt_artist_image
+        //     if(data.yt_cover_image.offical == true){
+        //         console.log("[WAYI] Using Youtube official image for " + id + ' (' + data.track + ')');
+        //         // Add zoom class to the cover because the image having black bar on the top and bottom
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping adding zoom class");
+        //         }
+        //         return data.yt_cover_image.cover;
+        //     }    
+        //     else if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
+        //         console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
+        //         }
+        //         return data.image;
+                
+                
+        //     } 
+        //     else if (data.album_image) {
+        //         console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
+        //         }
+        //         return data.album_image;
+        //     }
+        //     else if(data.yt_cover_image.url != undefined){
+        //         console.log("[WAYI] Using Youtube unofficial image for " + id + ' (' + data.track + ')');
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping adding zoom class");
+        //         }
+        //         return data.yt_cover_image.cover;
+        //     }
+        //     else if (data.alt_artist_image) {
+        //         console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
+        //         }
+        //         return data.alt_artist_image;
+        //     }
+        //     else{
+        //         console.log("[WAYI] Fallback Using default image for " + id + ' (' + data.track + ')');
+        //         if(id != "Not Specified"){
+        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
+        //         }else{
+        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
+        //         }
+        //         return "https://lastfm.freetls.fastly.net/i/u/300x300/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg";
+        //     }
+        // }
+
+
+
+
+
+        // removeNowPlayingBox(id) {
+        //     id = this.convertToUniqueID(id);
+        //     let box = document.querySelector(".nowplay-box-" + id);
+        //     box.remove();
+        //     console.log("[WAYI] Removed box for " + id);
+        // }
+
+        // removeAllNowPlayingBox() {
+        //     let boxes = document.querySelectorAll(".nowplay-box");
+        //     boxes.forEach(box => {
+        //         box.remove();
+        //     });
+        //     console.log("[WAYI] Removed all boxes");
+        // }
+
+
+
+        // updateDataFromAPI(){
+        //     fetch(this.data.path + this.data.username)
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         // Hide loading (invisible)
+        //         document.querySelector(this.element.loading).style.display = "none";
+        //         this.compare(data);
+        //     });
+
+        // }
+
+        // reinit() {
+        //     this.data.lastData = [];
+        //     this.data.currentData = [];
+        // }
+
+        // init(){
+        //     // Show loading (visible)
+        //     document.querySelector(this.element.loading).style.display = "flex";
+        //     this.updateDataFromAPI();
+        //     setInterval(() => {
+        //         this.updateDataFromAPI();
+        //     }, 10000);
+
+        // }
+
+        // compare(data) {
+        //     this.data.currentData = data;
+        //     // If last data and current data is the same, skip the update
+        //     if (JSON.stringify(this.data.lastData) === JSON.stringify(this.data.currentData)) {
+        //         console.log("[WAYI] Skipped data update because the data is the same");
+        //         return;
+        //     }
+        //     if (data !== this.data.lastData) {
+        //         if (typeof this.data.createdBox[data.self.name] === 'undefined') {
+        //             this.createSelfBox(data);
+        //             this.data.createdBox[data.self.name] = true;
+        //         }
+        //         // {self.username} , data.{self.username}
+        //         this.updateNowPlayingBox(data.self.name, data[data.self.name][0]);
+        //         data.friends.forEach(friend => {
+        //             // Compare the last data and current data
+        //                 //if data[friend.name][0] is undefined that means the data limit is reached (skip the user)
+        //                 if (typeof data[friend.name] === 'undefined') {
+        //                     console.log("[WAYI] Skipped " + friend.name + " because of data limit reached (Backend limit)");
+        //                     // Show the error message from data[error] if it's not undefined
+        //                     if (typeof data.error !== 'undefined') {
+        //                         console.log("[WAYI] Error from backend: " + data.error);
+        //                     }
+        //                     return;
+        //                 }
+        //                 if (typeof this.data.createdBox[friend.name] === 'undefined') {
+        //                     this.createNowPlayingBox(friend.name, friend);
+        //                     this.data.createdBox[friend.name] = true;
+        //                 }
+        //                 this.updateNowPlayingBox(friend.name, data[friend.name][0]);
+        //                 // if "" that means the user is playing something now so set the epoch to current epoch
+        //                 let currentEpoch = data[friend.name][0].epoch == "" ? Math.floor(Date.now() / 1000) : data[friend.name][0].epoch;
+        //                 this.data.epochList[friend.name] = currentEpoch;
+        //             });
+
+        //         this.changeElementOrder();
+        //         this.data.lastData = this.data.currentData;
+        //     }
+        // }
+
+        // orderByEpoch() {
+        //     let sorted = [];
+        //     for (let key in this.data.epochList) {
+        //         sorted.push([key, this.data.epochList[key]]);
+        //     }
+        //     sorted.sort(function(a, b) {
+        //         return a[1] - b[1];
+        //     });
+        //     return sorted.reverse();
+        // }
+
+
+        // changeElementOrder() {
+        //     let sorted = this.orderByEpoch();
+        //     this.data.currentOrder = sorted;
+        //     if (JSON.stringify(this.data.lastOrder) === JSON.stringify(this.data.currentOrder)) {
+        //         console.log("[WAYI] Skipped order update because the order is the same");
+        //         return;
+        //     }
+        //     let boxes = document.querySelectorAll(".nowplay-box");
+        //     sorted.forEach((item, index) => {
+        //         let box = document.querySelector(".nowplay-box-" + this.convertToUniqueID(item[0]));
+        //         box.style.order = index;
+        //         console.log("[WAYI] Changed order of " + item[0] + ' (' + this.convertToUniqueID(item[0]) + ') to ' + index);
+        //     });
+        //     this.data.lastOrder = this.data.currentOrder;
+        // }
+
+
+        // createSelfBox(data) {
+        //     this.createNowPlayingBox(data.self.name, data.self);
+        // }
+
+        // changeUser(username) {
+        //     this.data.username = username;
+        //     this.reinit();
+        // }
+
+
+
+
+
+
+// // ?username=Nicezki
+// try {
+//     var username = window.location.search.split('username=')[1];
+// } catch (error) {
+//     var username = "Nicezki";
+// }
+
+// if (username == undefined) {
+//     username = "Nicezki";
+// }
+
+// var app = new yaminowplaying(username);
