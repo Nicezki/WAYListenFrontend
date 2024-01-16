@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 2.0.0 DEV001
+// VERSION 2.0.0 DEV200 Pre-release 1
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.db = null;
@@ -68,10 +68,14 @@ class yaminowplaying {
             friendsV1 : [],
             recenttracks : [],
             lastrecenttracks : [],
+            lastOrder : [],
+            currentOrder : [],
             friendscount : 0,
             data : {},
             lastData : {},
             errorTimeout : 0,
+            reloadTime: 10000,
+            limitRateTime: 200,
         }
 
         this.templateElement.nowplaybox = document.querySelector(this.element.template).cloneNode(true);
@@ -83,6 +87,7 @@ class yaminowplaying {
 
 
         async init() {
+            this.addBtnEvent();
             this.hidePart(this.part.supporter);
             this.showScreen(this.screen.loading);
             this.showPart(this.part.loaddetail);
@@ -90,36 +95,71 @@ class yaminowplaying {
             this.changeLoadingText("กำลังเช็คสถานะฐานข้อมูล",0);
             this.changeLoadingText("Checking database status",1);
             this.initDB();
-            this.changeLoadingText("กำลังเช็คสถานะการเข้าสู่ระบบ",0);
-            this.changeLoadingText("Checking your login status...",1);
+            //If guest mode is true, skip login
+            if (this.data.guestMode != true) {
+                this.changeLoadingText("กำลังเช็คสถานะการเข้าสู่ระบบ",0);
+                this.changeLoadingText("Checking your login status...",1);
 
 
-            // Check if the user is logged in
-            await this.checkLoginStatus();
-            // If the login result is false, return
-            if (this.validYamiToken == false) {
-                console.log("[YAMILISTEN] Login result is false, skipping init");
-                this.showScreen(this.screen.login);
-                this.showPart(this.part.loginbtn,true);
-                return;
+                // Check if the user is logged in
+                await this.checkLoginStatus();
+                // If the login result is false, return
+                if (this.validYamiToken == false) {
+                    console.log("[YAMILISTEN] Login result is false, skipping init");
+                    this.showScreen(this.screen.login);
+                    this.showPart(this.part.loginbtn,true);
+                    return;
+                }
+            }else{
+                this.data.username = this.data.defaultusername;
+                console.log("[YAMILISTEN] Guest mode is true, skipping login");
+                //Slow update time
+                this.data.reloadTime = 15000;
+                this.data.limitRateTime = 1000;
             }
-
+            
             this.changeLoadingText("กำลังเช็คสถานะชื่อผู้ใช้ LastFM",0);
             this.changeLoadingText("Checking your LastFM username...",1);
-
             // Check if the lastFMUsername is present
             let lastfmUsernameStatus = this.checkLastfmUsernamePresent();
             // If the lastFMUsername is empty, show the login screen
             if (lastfmUsernameStatus == 2) {
                 console.log("[YAMILISTEN] LastFM username is empty, showing login screen");
                 this.showScreen(this.screen.login);
+                //Change text in setlastfm part
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "You didn't set your Last.fm username in Yami Community";
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "คุณยังไม่ได้ตั้งชื่อผู้ใช้ LastFM ใน Yami Community";
                 this.showPart(this.part.setlastfm,true);
-                this.hidePart(this.part.loginbtn);
+                this.hidePart(this.part.loginbtn);  
             }else if (lastfmUsernameStatus == 1) {
                 console.log("[YAMILISTEN] LastFM username is present, check if the username is valid");
                 this.changeLoadingText("กำลังเช็คสถานะผู้ใช้ "+this.data.username+" ใน LastFM",0);
                 this.changeLoadingText("Checking your LastFM username (" + this.data.username + ")...",1);
-                await this.getMyLastFMProfile();
+                let lastfmResult =  await this.getMyLastFMProfile();
+                // If the result is false, show the login screen
+                if (lastfmResult == false) {
+                    console.log("[YAMILISTEN] LastFM username is invalid, showing login screen");
+                    this.showScreen(this.screen.login);
+                    //Change text in setlastfm part
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                    this.showPart(this.part.setlastfm,true);
+                    this.hidePart(this.part.loginbtn);
+                    return;
+                }
+            }
+
+            // Check if the profile is empty
+            if (this.data.profile == {} || this.data.profile == undefined || this.data.profile == null) {
+                console.log("[YAMILISTEN] Profile is empty, skipping init");
+                //Change text in setlastfm part
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
+                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                this.showScreen(this.screen.login);
+                this.showPart(this.part.setlastfm,true);
+                this.hidePart(this.part.loginbtn);
+                
+                return;
             }
 
             this.changeLoadingText("กำลังเช็คสถานะเพื่อนของ "+this.data.username+" ใน LastFM",0);
@@ -130,19 +170,51 @@ class yaminowplaying {
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,true,true);
             this.createAllNowPlayingBox();
             this.updateAllNowPlayingBox();
+            this.changeBoxOrder();
             this.showScreen(this.screen.listen);
+
+            this.data.reloadTime = this.calculateTimeToWait();
 
             // Refresh every 10 seconds
             setInterval(() => {
                 console.log("[YAMILISTEN] Refreshing...");
                 this.refresh();
-            }, 10000);
+            }, this.data.reloadTime);
+        }
+
+
+        // Add button event listener
+        addBtnEvent() {
+            document.querySelector(this.btn.login).addEventListener("click", () => {
+                this.loginWithYami();
+            });
+            document.querySelector(this.btn.guest).addEventListener("click", () => {
+                this.data.guestMode = true;
+                this.init();
+            });
+            document.querySelector(this.btn.setlastfm).addEventListener("click", () => {
+                this.setLastfmUsernameFronYami();
+            });
         }
 
         async refresh() {
             this.data.lastData = this.data.recenttracks;
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,false,true);
             this.updateAllNowPlayingBox();
+            this.changeBoxOrder();
+        }
+
+        navigateToTrackPage(username){
+            try{
+                //Get data from currentData
+                var data = this.data.recenttracks[username]["track"][0];
+
+                //Navigate to the track page
+                window.open(data.url, '_blank');
+            }catch(error){
+                console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
+                console.log("[WAYI] Data: " + data);
+            }
         }
 
 
@@ -163,7 +235,7 @@ class yaminowplaying {
         loginWithYami() {
                 console.log("[YAMILISTEN] Login Process started");
                 // Open Yami login page in a popup window
-                const popup = window.open("https://cynthia.yami.one/auth/preauth?redirect=https://nicezki.com/listen&checkback=https://nicezki.com/yamic/checkback/inline", "Yami Login", "width=500,height=500");
+                const popup = window.open("https://cynthia.yami.one/auth/preauth?redirect=https://nicezki.com/listen&checkback=https://nicezki.com/yamic/checkback/inline", "Yami Login", "width=800,height=800");
                 const interval = setInterval(() => {
                     if (popup.closed) {
                         clearInterval(interval);
@@ -175,10 +247,34 @@ class yaminowplaying {
                         }else{
                             console.log("[YAMILISTEN] Yami token is seem valid, loading friends");
                             this.getYamiUserData();
+                            this.init();
                         }
                     }
                 }, 500);
         }
+
+        setLastfmUsernameFronYami() {
+            console.log("[YAMILISTEN] Setting LastFM username from Yami process started");
+            // Open Yami login page in a popup window
+            //https://yami.one/profile/1-nicezki/edit/ (Obtain the url from data.yamiuserdata.profileUrl)
+            const popup = window.open(this.data.yamiuserdata.profileUrl + "/edit/#form_header_core_pfieldgroups_15", "Yami Login", "width=1000,height=1700");
+            const interval = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(interval);
+                    console.log('[YAMILISTEN] Popup window closed');
+                    // Check if the Yami token is empty
+                    if (this.getCookie("yami_token") == "" || this.getCookie("yami_token") == undefined || this.getCookie("yami_token") == null) {
+                        console.log("[YAMILISTEN] Yami token is empty, skipping login");
+                        return;
+                    }else{
+                        console.log("[YAMILISTEN] Yami token is seem valid, loading friends");
+                        this.getYamiUserData();
+                        this.init();
+                    }
+                }
+            }, 500);
+        }
+        
 
         async getYamiUserData() {
             // Get the Yami token from the cookie
@@ -241,6 +337,10 @@ class yaminowplaying {
             if (data.supporter == 2) {
                 console.log("[YAMILISTEN] Thank you very much for supporting Yami Community! <3");
                 console.log("[YAMILISTEN] You are a Yami Supporter II");
+                console.log("[YAMILISTEN] The time to wait is 10 seconds for all friends");
+                this.data.reloadTime = 10000;
+                console.log("[YAMILISTEN] The rate limit time is 75ms");
+                this.data.limitRateTime = 75;
                 //Set text in supporter part
                 //document.querySelector(app.part.supporter).querySelectorAll("h2")[0].textContent
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[0].textContent = "SUPPORTER II";
@@ -271,6 +371,14 @@ class yaminowplaying {
             // Check from this.data.yamiuserdata if the lastFMUsername is empty
             // return 0 if not logged in, 1 if logged in and lastFMUsername is not empty, 2 if logged in but lastFMUsername is empty
             // Check first if data.yamiuserdata is empty
+            // If guest mode is true, skip the check
+            if (this.data.guestMode == true) {
+                console.log("[YAMILISTEN] Guest mode is true, skipping check for LastFM username");
+                console.log("[YAMILISTEN] Defaulting to default username (" + this.data.defaultusername + ")")
+                this.data.username = this.data.defaultusername;
+                return 1;
+            }
+
             if (this.data.yamiuserdata == {}){
                 console.log("[YAMILISTEN] Yami user data is empty, skipping check for LastFM username");
                 console.log("[YAMILISTEN] Defaulting to default username (" + this.data.defaultusername + ")");
@@ -294,6 +402,10 @@ class yaminowplaying {
             try {
                 const response = await fetch(this.data.lastfmpath + this.data.lastfmsubpath.usergetinfo + username + "&api_key=" + this.data.apikey + "&format=json");
                 if (!response.ok) {
+                    if (response.status == 404) {
+                        console.log("[YAMILISTEN] The user " + username + " is not found");
+                        return false;
+                    }
                     throw new Error(`[YAMILISTEN] HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
@@ -332,6 +444,11 @@ class yaminowplaying {
                 }
             } catch (error) {
                 console.error('[YAMILISTEN] Error fetching friends:', error);
+                //If it's 404, return false
+                if (error == "Error: [YAMILISTEN] HTTP error! status: 404") {
+                    console.log("[YAMILISTEN] The user " + username + " is not found");
+                    return false;
+                }
                 this.data.errorTimeout++;
                 if (this.data.errorTimeout > 5) {
                     console.log("[YAMILISTEN] Error timeout reached, skipping getting friends");
@@ -406,8 +523,8 @@ class yaminowplaying {
         async getMyLastFMProfile() {
             // If the data is empty, return false
             let data = await this.getLastfmProfile(this.data.username);
-            if (data == "") {
-                console.log("[YAMILISTEN] LastFM profile data is empty, skipping process profile");
+            if (data == "" || data == undefined || data == null) {
+                console.log("[YAMILISTEN] LastFM profile data is empty, returning to login screen");
                 return false;
             }
             // Else, process the data
@@ -439,6 +556,7 @@ class yaminowplaying {
                 return await this.getRecentTracks(username,raw,limit);
             }
         }
+        
 
 
         // Get the recent tracks of the all friends
@@ -454,8 +572,8 @@ class yaminowplaying {
             // Loop through all friends
             for (let key in this.data.friends) {
                 // Rate limit
-                console.log("[YAMILISTEN] Slow down, waiting for 50ms");
-                await new Promise(resolve => setTimeout(resolve, 50));
+                console.log("[YAMILISTEN] Slow down, waiting for " + this.data.limitRateTime + "ms");
+                await new Promise(resolve => setTimeout(resolve, this.data.limitRateTime));
                 console.log("[YAMILISTEN] Getting recent tracks of " + this.data.friends[key].name);
                 if (annouce) {
                     this.changeLoadingText("กำลังเช็คเพลงล่าสุดของ " + this.data.friends[key].name,0);
@@ -530,6 +648,11 @@ class yaminowplaying {
         createNowPlayingBox(username) {
             console.log("[YAMILISTEN] Creating box for " + username);
             username = this.fixName(username);
+            //Check if user have the song 
+            if (this.data.recenttracks[username]["track"][0] == undefined) {
+                console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping create box");
+                return;
+            }
             let box = this.templateElement.nowplaybox.cloneNode(true);
             box.classList.add("nowplay-box");
             box.classList.add("nowplay-box-" + username);
@@ -546,6 +669,22 @@ class yaminowplaying {
             }
             box.querySelector(".nowplay-songinfo").classList.add("animated");
             box.querySelector(".nowplay-songinfo").classList.add("slideInUp");
+            box.querySelector(".nowplay-usernamebox").addEventListener("click", () => {
+                console.log("[WAYI] Go to " + username + "'s profile");
+                if(username == this.data.profile.name.toLowerCase())
+                window.open(this.data.profile.url, '_blank');
+                else{
+                window.open(this.data.friends[username].url, '_blank');
+                }
+            });
+
+            box.querySelector(".nowplay-songinfo").addEventListener("click", () => {
+                this.navigateToTrackPage(username);
+            });
+
+            box.querySelector(".nowplay-usernamebox").style.cursor = "pointer";
+            box.querySelector(".nowplay-songinfo").style.cursor = "pointer";
+
             box.style.display = "flex";
             box.style.visibility = "visible";
             document.querySelector(this.element.listarea).appendChild(box);
@@ -554,8 +693,11 @@ class yaminowplaying {
 
         async updateNowPlayingBox(username) {
             try {
-                
                 username = this.fixName(username);
+                if (this.data.recenttracks[username]["track"][0] == undefined) {
+                    console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping update box");
+                    return;
+                }
                 let box = document.querySelector(".nowplay-box-" + username);
                 let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
                 let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
@@ -614,6 +756,46 @@ class yaminowplaying {
             }
         }
 
+        orderByEpoch() {
+            let sorted = [];
+            //can use getListeningEpoch(username) and select box by username
+            for (let key in this.data.recenttracks) {
+                //If zero change to current time
+                if (this.getListeningEpoch(key) == 0) {
+                    sorted.push([key, Date.now()]);
+                    continue;
+                }
+                sorted.push([key, this.getListeningEpoch(key)]);
+            }
+            sorted.sort(function(a, b) {
+                return a[1] - b[1];
+            });
+            return sorted.reverse();
+        }
+
+        changeBoxOrder() {
+            let sorted = this.orderByEpoch();
+            this.data.currentOrder = sorted;
+            if (JSON.stringify(this.data.lastOrder) === JSON.stringify(this.data.currentOrder)) {
+                console.log("[YAMILISTEN] Skipped order update because the order is the same");
+                return;
+            }
+            let boxes = document.querySelectorAll(".nowplay-box");
+            sorted.forEach((item, index) => {
+                // If the box is not present, skip the update
+                if (document.querySelector(".nowplay-box-" + this.fixName(item[0])) == null) {
+                    console.log("[YAMILISTEN] Skipped order update because the box is not present");
+                    return;
+                }
+                let box = document.querySelector(".nowplay-box-" + this.fixName(item[0]));
+                box.style.order = index;
+                console.log("[YAMILISTEN] Changed order of " + item[0] + ' (' + this.fixName(item[0]) + ') to ' + index);
+            });
+            this.data.lastOrder = this.data.currentOrder;
+
+
+        }
+
         createAllNowPlayingBox() {
             // Loop through all friends including self
             //Self
@@ -630,6 +812,22 @@ class yaminowplaying {
             }
         }
 
+        calculateTimeToWait() {
+            //Calculate the time to wait (friendnum (max 30) * 1000ms)
+            //If the time to wait is more than 20 seconds, set it to 20 seconds
+            let i = this.data.friendscount;
+            let timeToWait = (i * 1.5) * 500;
+            if (timeToWait > 20000) {
+                timeToWait = 20000;
+            }
+            //If the time to wait is less than 10 seconds, set it to 10 seconds
+            if (timeToWait < 10000) {
+                timeToWait = 10000;
+            }
+            console.log("[YAMILISTEN] [Qouta] According to the number of friends (" + i + "), the time to wait is " + timeToWait + "ms");
+            return timeToWait;
+        }
+        
 
         updateAllNowPlayingBox() {
             // Loop through all friends including self
@@ -641,6 +839,8 @@ class yaminowplaying {
             let i = 0;
             for (let key in this.data.friends) {
                 if (i > 30) {
+                    console.log("[YAMILISTEN] Time to wait for " + key + " is " + timeToWait + "ms");
+
                     console.log("[YAMILISTEN] More than 30 friends, skipping update all other boxes");
                     break;
                 }
@@ -742,12 +942,17 @@ class yaminowplaying {
 
         getListeningEpoch(username) {
             username = this.fixName(username);
+            //Handle no song 
+            if (this.data.recenttracks[username]["track"][0] == undefined) {
+                console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping get listening epoch");
+                return 0;
+            }
             //'epoch' => isset($track['date']['uts']) ? $track['date']['uts'] : '',
             //this date array can be gone if the user is listening to the song right now
             if (this.data.recenttracks[username]["track"][0]["date"] == undefined) {
                 return 0;
             }else{
-                return this.data.recenttracks[username]["track"][0]["date"]["uts"] ?? 0;
+                return parseInt(this.data.recenttracks[username]["track"][0]["date"]["uts"]) ?? 0;
             }
         }
 
