@@ -1,0 +1,112 @@
+{
+    "self": {
+        "name": "Nicezki",
+        "realname": "Nicezki",
+        "url": "https://www.last.fm/user/Nicezki",
+        "image": "https://lastfm.freetls.fastly.net/i/u/300x300/4bf92bc6dedddb55e8c81b577e712e78.png"
+    },
+    "friends": [
+        {
+            "name": "Nakatonoha",
+            "realname": "Nakatonoha",
+            "url": "https://www.last.fm/user/Nakatonoha",
+            "image": "https://lastfm.freetls.fastly.net/i/u/300x300/69808225096731b616435e9ec53e4d10.png"
+        },
+        {
+            "name": "Blinkdonthitme",
+            "realname": "JAKKARIN TRONGJIT",
+            "url": "https://www.last.fm/user/Blinkdonthitme",
+            "image": "https://lastfm.freetls.fastly.net/i/u/300x300/0a6600824ceb5027f1ef7908c4281a6f.png"
+        }
+    ],
+    "Nicezki": [
+        {
+            "username": "Nicezki",
+            "nowplaying": "true",
+            "datetime": "",
+            "epoch": "",
+            "artist": "Nijigasaki High School Idol Club",
+            "artist_image": "",
+            "album": "Yume ga Bokura no Taiyo sa - EP",
+            "track": "Ryoran! Victory Road",
+            "image": "https://lastfm.freetls.fastly.net/i/u/300x300/99b2375dcf098bf10c2386d742172f9e.jpg",
+            "URL": "https://www.last.fm/music/Nijigasaki+High+School+Idol+Club/_/Ryoran!+Victory+Road",
+            "mbid": "",
+            "alt_name": "Nijigasaki High School Idol Club",
+            "alt_artist_image": "https://e-cdns-images.dzcdn.net/images/artist/c8411eb601d63965ee6c1fbd49ac4ac0/500x500-000000-80-0-0.jpg",
+            "yt_cover_image": {
+                "url": "Wi43b0ESIgA",
+                "cover": "https://i.ytimg.com/vi/Wi43b0ESIgA/hqdefault.jpg",
+                "official": true
+            },
+            "album_image": "https://lastfm.freetls.fastly.net/i/u/300x300/d753dbcc34a65bb37d35a002e0b3f0bd.png"
+        },
+        {
+            "username": "Nicezki",
+            "nowplaying": false,
+            "datetime": "14 Jan 2024, 14:41",
+            "epoch": "1705243281",
+            "artist": "Nijigasaki High School Idol Club",
+            "artist_image": "",
+            "album": "Yume ga Bokura no Taiyo sa - EP",
+            "track": "Ryoran! Victory Road",
+            "image": "https://lastfm.freetls.fastly.net/i/u/300x300/99b2375dcf098bf10c2386d742172f9e.jpg",
+            "URL": "https://www.last.fm/music/Nijigasaki+High+School+Idol+Club/_/Ryoran!+Victory+Road",
+            "mbid": "",
+            "alt_name": "Nijigasaki High School Idol Club",
+            "alt_artist_image": "https://e-cdns-images.dzcdn.net/images/artist/c8411eb601d63965ee6c1fbd49ac4ac0/500x500-000000-80-0-0.jpg",
+            "yt_cover_image": {
+                "url": "Wi43b0ESIgA",
+                "cover": "https://i.ytimg.com/vi/Wi43b0ESIgA/hqdefault.jpg",
+                "official": true
+            },
+            "album_image": "https://lastfm.freetls.fastly.net/i/u/300x300/d753dbcc34a65bb37d35a002e0b3f0bd.png"
+        }
+    ],
+    "Nakatonoha": [
+        {
+            "username": "Nakatonoha",
+            "nowplaying": false,
+            "datetime": "24 Dec 2023, 00:59",
+            "epoch": "1703379543",
+            "artist": "RE Aoharu",
+            "artist_image": "",
+            "album": "",
+            "track": "Orchestral Arrangement",
+            "image": "",
+            "URL": "https://www.last.fm/music/RE+Aoharu/_/Orchestral+Arrangement",
+            "mbid": "",
+            "alt_name": "",
+            "alt_artist_image": "",
+            "yt_cover_image": {
+                "url": "5MMrahZvLUc",
+                "cover": "https://i.ytimg.com/vi/5MMrahZvLUc/hqdefault.jpg",
+                "official": false
+            },
+            "album_image": ""
+        }
+    ],
+    "Blinkdonthitme": [
+        {
+            "username": "Blinkdonthitme",
+            "nowplaying": false,
+            "datetime": "11 Jan 2024, 15:21",
+            "epoch": "1704986499",
+            "artist": "BNK48",
+            "artist_image": "",
+            "album": "",
+            "track": "Koisuru Fortune Cookie (คุกกี้เสี่ยงทาย)",
+            "image": "",
+            "URL": "https://www.last.fm/music/BNK48/_/Koisuru+Fortune+Cookie+(%E0%B8%84%E0%B8%B8%E0%B8%81%E0%B8%81%E0%B8%B5%E0%B9%89%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B9%88%E0%B8%A2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%A2)",
+            "mbid": "",
+            "alt_name": "BNK48",
+            "alt_artist_image": "https://e-cdns-images.dzcdn.net/images/artist/438a9e246448c6709d3c8d4201c6441a/500x500-000000-80-0-0.jpg",
+            "yt_cover_image": {
+                "url": "mfqJyKm20Z4",
+                "cover": "https://i.ytimg.com/vi/mfqJyKm20Z4/hqdefault.jpg",
+                "official": false
+            },
+            "album_image": ""
+        }
+    ]
+}

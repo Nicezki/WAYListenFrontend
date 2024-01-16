@@ -1,0 +1,849 @@
+{
+    "yamiloginpath": "https://cynthia.yami.one/auth/preauth?redirect=https://nicezki.com/listen&checkback=https://nicezki.com/yamic/checkback",
+    "yamipath": "https://cynthia.yami.one/api/v1/yamilastfm/users",
+    "path": "https://playgrounds.nicezki.com/api/v1/lastfmplay/?username=",
+    "lastfmpath": "https://ws.audioscrobbler.com/2.0/",
+    "lastfmsubpath": {
+        "recenttracks": "?method=user.getrecenttracks&user=",
+        "usergetinfo": "?method=user.getinfo&user=",
+        "usergetfriends": "?method=user.getfriends&user=",
+        "usergettoptracks": "?method=user.gettoptracks&user=",
+        "usergettopartists": "?method=user.gettopartists&user=",
+        "usergettopalbums": "?method=user.gettopalbums&user=",
+        "albumgetinfo": "?method=album.getinfo&artist=",
+        "trackgetinfo": "?method=track.getinfo&artist=",
+        "artistgetinfo": "?method=artist.getinfo&artist=",
+        "chartgettopartists": "?method=chart.gettopartists",
+        "chartgettoptracks": "?method=chart.gettoptracks",
+        "chartgettopalbums": "?method=chart.gettopalbums",
+        "chartgettoptags": "?method=chart.gettoptags"
+    },
+    "apikey": "d3da3066f994feac54edd4103aabe46f",
+    "yamiuserdata": {
+        "id": 1,
+        "name": "Nicezki",
+        "formattedName": "<strong style=\"color: #ff0000; text-shadow: 0 0 8px #ff0000;\">Nicezki</strong>",
+        "primaryGroup": {
+            "id": 4,
+            "name": "Administrators",
+            "formattedName": "<strong style=\"color: #ff0000; text-shadow: 0 0 8px #ff0000;\">Administrators</strong>"
+        },
+        "joined": "2018-03-24T15:19:39Z",
+        "lastActivity": "2024-01-14T07:37:09Z",
+        "birthday": "6/1/2001",
+        "lastFMUsername": "Nicezki",
+        "email": "nicekungx@gmail.com",
+        "photoUrl": "https://s1.yami.one/profile/monthly_2021_04/58fb8fd4e61e.jpg.3f53fc3104c9e217fc55ed5a6d16fad8.jpg",
+        "coverPhotoUrl": "https://s1.yami.one/profile/monthly_2019_04/155609170986107090.jpg.dee04745580aea3b5d41b49b23c31f57.jpg",
+        "profileUrl": "https://yami.one/profile/1-nicezki/",
+        "supporter": 2
+    },
+    "defaultusername": "Nicezki",
+    "guestMode": false,
+    "validYamiToken": false,
+    "username": "Nicezki",
+    "profile": {
+        "name": "Nicezki",
+        "age": "0",
+        "subscriber": "1",
+        "realname": "Nicezki",
+        "bootstrap": "0",
+        "playcount": "12395",
+        "artist_count": "1536",
+        "playlists": "0",
+        "track_count": "3489",
+        "album_count": "1082",
+        "image": [
+            {
+                "size": "small",
+                "#text": "https://lastfm.freetls.fastly.net/i/u/34s/4bf92bc6dedddb55e8c81b577e712e78.png"
+            },
+            {
+                "size": "medium",
+                "#text": "https://lastfm.freetls.fastly.net/i/u/64s/4bf92bc6dedddb55e8c81b577e712e78.png"
+            },
+            {
+                "size": "large",
+                "#text": "https://lastfm.freetls.fastly.net/i/u/174s/4bf92bc6dedddb55e8c81b577e712e78.png"
+            },
+            {
+                "size": "extralarge",
+                "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/4bf92bc6dedddb55e8c81b577e712e78.png"
+            }
+        ],
+        "registered": {
+            "unixtime": "1432445893",
+            "#text": 1432445893
+        },
+        "country": "Thailand",
+        "gender": "n",
+        "url": "https://www.last.fm/user/Nicezki",
+        "type": "subscriber"
+    },
+    "friends": {
+        "nakatonoha": {
+            "name": "Nakatonoha",
+            "url": "https://www.last.fm/user/Nakatonoha",
+            "country": "Thailand",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/69808225096731b616435e9ec53e4d10.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/69808225096731b616435e9ec53e4d10.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/69808225096731b616435e9ec53e4d10.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/69808225096731b616435e9ec53e4d10.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1698071607",
+                "#text": "2023-10-23 14:33"
+            },
+            "realname": "Nakatonoha",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "blinkdonthitme": {
+            "name": "Blinkdonthitme",
+            "url": "https://www.last.fm/user/Blinkdonthitme",
+            "country": "Thailand",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/0a6600824ceb5027f1ef7908c4281a6f.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/0a6600824ceb5027f1ef7908c4281a6f.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/0a6600824ceb5027f1ef7908c4281a6f.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/0a6600824ceb5027f1ef7908c4281a6f.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1698823405",
+                "#text": "2023-11-01 07:23"
+            },
+            "realname": "JAKKARIN TRONGJIT",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "deathfrostth": {
+            "name": "DeathFrostTH",
+            "url": "https://www.last.fm/user/DeathFrostTH",
+            "country": "Thailand",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/e8c4b6cb8fceceda7ddd3cbf77f1e24e.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/e8c4b6cb8fceceda7ddd3cbf77f1e24e.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/e8c4b6cb8fceceda7ddd3cbf77f1e24e.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/e8c4b6cb8fceceda7ddd3cbf77f1e24e.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1698071334",
+                "#text": "2023-10-23 14:28"
+            },
+            "realname": "",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "shihofuyu": {
+            "name": "shihofuyu",
+            "url": "https://www.last.fm/user/shihofuyu",
+            "country": "Germany",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/3aed7f036eb65c707d34fbf35c06f1b7.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/3aed7f036eb65c707d34fbf35c06f1b7.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/3aed7f036eb65c707d34fbf35c06f1b7.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/3aed7f036eb65c707d34fbf35c06f1b7.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1176672543",
+                "#text": "2007-04-15 21:29"
+            },
+            "realname": "shiho",
+            "subscriber": "1",
+            "bootstrap": "0",
+            "type": "subscriber"
+        },
+        "by_dom": {
+            "name": "BY_Dom",
+            "url": "https://www.last.fm/user/BY_Dom",
+            "country": "None",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/91b66f352922a844f4b02c910e31f34c.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/91b66f352922a844f4b02c910e31f34c.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/91b66f352922a844f4b02c910e31f34c.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/91b66f352922a844f4b02c910e31f34c.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1696603113",
+                "#text": "2023-10-06 14:38"
+            },
+            "realname": "",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "asutokunth": {
+            "name": "AsutoKunTH",
+            "url": "https://www.last.fm/user/AsutoKunTH",
+            "country": "None",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/e642478a5116ae93450d55ad363804f8.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/e642478a5116ae93450d55ad363804f8.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/e642478a5116ae93450d55ad363804f8.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/e642478a5116ae93450d55ad363804f8.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1694286672",
+                "#text": "2023-09-09 19:11"
+            },
+            "realname": "AsutoKunTH",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "genzerg": {
+            "name": "GenZerg",
+            "url": "https://www.last.fm/user/GenZerg",
+            "country": "Thailand",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/b9ae1e06a73f0ca5ddbeceac741a5da5.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/b9ae1e06a73f0ca5ddbeceac741a5da5.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/b9ae1e06a73f0ca5ddbeceac741a5da5.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/b9ae1e06a73f0ca5ddbeceac741a5da5.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1687930045",
+                "#text": "2023-06-28 05:27"
+            },
+            "realname": "",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        },
+        "nannantsumu": {
+            "name": "nannantsumu",
+            "url": "https://www.last.fm/user/nannantsumu",
+            "country": "Thailand",
+            "playlists": "0",
+            "playcount": "0",
+            "image": [
+                {
+                    "size": "small",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/34s/cfedb6eb670d1afe855a850bcc095f73.png"
+                },
+                {
+                    "size": "medium",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/64s/cfedb6eb670d1afe855a850bcc095f73.png"
+                },
+                {
+                    "size": "large",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/174s/cfedb6eb670d1afe855a850bcc095f73.png"
+                },
+                {
+                    "size": "extralarge",
+                    "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/cfedb6eb670d1afe855a850bcc095f73.png"
+                }
+            ],
+            "registered": {
+                "unixtime": "1685018626",
+                "#text": "2023-05-25 12:43"
+            },
+            "realname": "CREAMBERRY",
+            "subscriber": "0",
+            "bootstrap": "0",
+            "type": "user"
+        }
+    },
+    "friendsV1": [],
+    "recenttracks": {
+        "nakatonoha": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "RE Aoharu"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": ""
+                        },
+                        {
+                            "size": "medium",
+                            "#text": ""
+                        },
+                        {
+                            "size": "large",
+                            "#text": ""
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": ""
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": ""
+                    },
+                    "name": "Orchestral Arrangement",
+                    "url": "https://www.last.fm/music/RE+Aoharu/_/Orchestral+Arrangement",
+                    "date": {
+                        "uts": "1703379543",
+                        "#text": "24 Dec 2023, 00:59"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "Nakatonoha",
+                "totalPages": "891",
+                "page": "1",
+                "perPage": "1",
+                "total": "891"
+            }
+        },
+        "blinkdonthitme": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "BNK48"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": ""
+                        },
+                        {
+                            "size": "medium",
+                            "#text": ""
+                        },
+                        {
+                            "size": "large",
+                            "#text": ""
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": ""
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": ""
+                    },
+                    "name": "Koisuru Fortune Cookie (คุกกี้เสี่ยงทาย)",
+                    "url": "https://www.last.fm/music/BNK48/_/Koisuru+Fortune+Cookie+(%E0%B8%84%E0%B8%B8%E0%B8%81%E0%B8%81%E0%B8%B5%E0%B9%89%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B9%88%E0%B8%A2%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%A2)",
+                    "date": {
+                        "uts": "1704986499",
+                        "#text": "11 Jan 2024, 15:21"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "Blinkdonthitme",
+                "totalPages": "382",
+                "page": "1",
+                "perPage": "1",
+                "total": "382"
+            }
+        },
+        "deathfrostth": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "Daisuke Ishiwatari - หัวข้อ"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": ""
+                        },
+                        {
+                            "size": "medium",
+                            "#text": ""
+                        },
+                        {
+                            "size": "large",
+                            "#text": ""
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": ""
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": ""
+                    },
+                    "name": "Smell of the Game",
+                    "url": "https://www.last.fm/music/Daisuke+Ishiwatari+-+%E0%B8%AB%E0%B8%B1%E0%B8%A7%E0%B8%82%E0%B9%89%E0%B8%AD/_/Smell+of+the+Game",
+                    "date": {
+                        "uts": "1705149839",
+                        "#text": "13 Jan 2024, 12:43"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "DeathFrostTH",
+                "totalPages": "947",
+                "page": "1",
+                "perPage": "1",
+                "total": "947"
+            }
+        },
+        "shihofuyu": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "8295ee00-0096-461d-95c7-c2263d2a4c6d",
+                        "#text": "Killswitch Engage"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/4001df3ee21040e7a3ce7ebe9a111e54.png"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/4001df3ee21040e7a3ce7ebe9a111e54.png"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/4001df3ee21040e7a3ce7ebe9a111e54.png"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/4001df3ee21040e7a3ce7ebe9a111e54.png"
+                        }
+                    ],
+                    "mbid": "86b939f5-b889-4114-8e9d-11eb21a6969e",
+                    "album": {
+                        "mbid": "06b30366-2a9b-3935-9f61-239a57e1e83a",
+                        "#text": "Alive or Just Breathing"
+                    },
+                    "name": "Numbered Days",
+                    "url": "https://www.last.fm/music/Killswitch+Engage/_/Numbered+Days",
+                    "date": {
+                        "uts": "1705246250",
+                        "#text": "14 Jan 2024, 15:30"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "shihofuyu",
+                "totalPages": "907716",
+                "page": "1",
+                "perPage": "1",
+                "total": "907716"
+            }
+        },
+        "by_dom": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "2918ce08-196e-408b-b3cb-4ccbefe62c3a",
+                        "#text": "NateWantsToBattle"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/4558c066001c4b56923bd7a4507fb044.png"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/4558c066001c4b56923bd7a4507fb044.png"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/4558c066001c4b56923bd7a4507fb044.png"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/4558c066001c4b56923bd7a4507fb044.png"
+                        }
+                    ],
+                    "mbid": "ff13bebd-a783-4544-a511-7ff8da50472d",
+                    "album": {
+                        "mbid": "1f9f7fe0-d246-4c84-848c-9db57a3043da",
+                        "#text": "Gotta Go Fast"
+                    },
+                    "name": "Sonic Heroes",
+                    "url": "https://www.last.fm/music/NateWantsToBattle/_/Sonic+Heroes",
+                    "date": {
+                        "uts": "1705243641",
+                        "#text": "14 Jan 2024, 14:47"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "BY_Dom",
+                "totalPages": "1462",
+                "page": "1",
+                "perPage": "1",
+                "total": "1462"
+            }
+        },
+        "asutokunth": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "Krage"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/accebe4ead2f4dedc30036a06e4b5fb9.jpg"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/accebe4ead2f4dedc30036a06e4b5fb9.jpg"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/accebe4ead2f4dedc30036a06e4b5fb9.jpg"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/accebe4ead2f4dedc30036a06e4b5fb9.jpg"
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": "request"
+                    },
+                    "name": "Request",
+                    "url": "https://www.last.fm/music/Krage/_/Request",
+                    "date": {
+                        "uts": "1705246069",
+                        "#text": "14 Jan 2024, 15:27"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "AsutoKunTH",
+                "totalPages": "6004",
+                "page": "1",
+                "perPage": "1",
+                "total": "6004"
+            }
+        },
+        "genzerg": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "9df7ddfb-75fe-4470-9269-5810d9263b09",
+                        "#text": "HOYO-MiX"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/e027da79496e092f2aaa3e2b939f29a6.jpg"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/e027da79496e092f2aaa3e2b939f29a6.jpg"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/e027da79496e092f2aaa3e2b939f29a6.jpg"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/e027da79496e092f2aaa3e2b939f29a6.jpg"
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": "Honkai: Star Rail - Astral Theater (Original Game Soundtrack)"
+                    },
+                    "name": "Aberrant Receptacle",
+                    "@attr": {
+                        "nowplaying": "true"
+                    },
+                    "url": "https://www.last.fm/music/HOYO-MiX/_/Aberrant+Receptacle"
+                },
+                {
+                    "artist": {
+                        "mbid": "9df7ddfb-75fe-4470-9269-5810d9263b09",
+                        "#text": "HOYO-MiX"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/b1f66cb055d3f363d58432199a6a852a.jpg"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/b1f66cb055d3f363d58432199a6a852a.jpg"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/b1f66cb055d3f363d58432199a6a852a.jpg"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/b1f66cb055d3f363d58432199a6a852a.jpg"
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": "Honkai: Star Rail - Svah Sanishyu (Original Game Soundtrack)"
+                    },
+                    "name": "Pedujara: Even Immortality Ends",
+                    "url": "https://www.last.fm/music/HOYO-MiX/_/Pedujara:+Even+Immortality+Ends",
+                    "date": {
+                        "uts": "1705246521",
+                        "#text": "14 Jan 2024, 15:35"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "GenZerg",
+                "totalPages": "6095",
+                "page": "1",
+                "perPage": "1",
+                "total": "6095"
+            }
+        },
+        "nannantsumu": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "338f5d97-3133-4bf8-a58e-068ff9b5405d",
+                        "#text": "King Gnu"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/0967f910dad43f5704dd63b7fe69d13a.png"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/0967f910dad43f5704dd63b7fe69d13a.png"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/0967f910dad43f5704dd63b7fe69d13a.png"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/0967f910dad43f5704dd63b7fe69d13a.png"
+                        }
+                    ],
+                    "mbid": "3dc375f5-9773-4b62-9bb4-76f369a5648a",
+                    "album": {
+                        "mbid": "5edc2cec-cde4-4d25-9cce-c91c6f982a77",
+                        "#text": "CEREMONY"
+                    },
+                    "name": "白日",
+                    "url": "https://www.last.fm/music/King+Gnu/_/%E7%99%BD%E6%97%A5",
+                    "date": {
+                        "uts": "1705239442",
+                        "#text": "14 Jan 2024, 13:37"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "nannantsumu",
+                "totalPages": "7449",
+                "page": "1",
+                "perPage": "1",
+                "total": "7449"
+            }
+        },
+        "nicezki": {
+            "track": [
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "Nijigasaki High School Idol Club"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": "Yume ga Bokura no Taiyo sa"
+                    },
+                    "name": "Ryoran! Victory Road",
+                    "@attr": {
+                        "nowplaying": "true"
+                    },
+                    "url": "https://www.last.fm/music/Nijigasaki+High+School+Idol+Club/_/Ryoran!+Victory+Road"
+                },
+                {
+                    "artist": {
+                        "mbid": "",
+                        "#text": "Nijigasaki High School Idol Club"
+                    },
+                    "streamable": "0",
+                    "image": [
+                        {
+                            "size": "small",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/34s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "medium",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/64s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "large",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/174s/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        },
+                        {
+                            "size": "extralarge",
+                            "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/99b2375dcf098bf10c2386d742172f9e.jpg"
+                        }
+                    ],
+                    "mbid": "",
+                    "album": {
+                        "mbid": "",
+                        "#text": "Yume ga Bokura no Taiyo sa"
+                    },
+                    "name": "Ryoran! Victory Road",
+                    "url": "https://www.last.fm/music/Nijigasaki+High+School+Idol+Club/_/Ryoran!+Victory+Road",
+                    "date": {
+                        "uts": "1705246410",
+                        "#text": "14 Jan 2024, 15:33"
+                    }
+                }
+            ],
+            "@attr": {
+                "user": "Nicezki",
+                "totalPages": "12395",
+                "page": "1",
+                "perPage": "1",
+                "total": "12395"
+            }
+        }
+    },
+    "lastrecenttracks": [],
+    "friendscount": 8,
+    "data": {},
+    "lastData": {}
+}
