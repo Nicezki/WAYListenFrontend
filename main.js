@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 2.0.0 DEV210 Pre-release 2
+// VERSION 2.0.0 DEV222 Pre-release 2
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.db = null;
@@ -57,6 +57,24 @@ class yaminowplaying {
                 chartgettopalbums : "?method=chart.gettopalbums",
                 chartgettoptags : "?method=chart.gettoptags",
             },
+            timeCacheExpire : {
+                "yamiuserdata": 60000 * 5,
+                "profile": 60000 * 60 * 24,
+                "friends": 60000 * 60 * 24,
+                "friendscount": 60000 * 60 * 24,
+                "lastData": 60000 * 60 * 24,
+                "recenttracks": 60000 * 60 * 24,
+                "username": 60000 * 60 * 24,
+            },
+            loadCacheStatus : {
+                "yamiuserdata": false,
+                "profile": false,
+                "friends": false,
+                "friendscount": false,
+                "lastData": false,
+                "recenttracks": false,
+                "username": false,
+            },
             apikey : "d3da3066f994feac54edd4103aabe46f",
             yamiuserdata : {},
             defaultusername : "Nicezki",
@@ -101,13 +119,14 @@ class yaminowplaying {
             // Init the database
             this.changeLoadingText("กำลังเช็คสถานะฐานข้อมูล",0);
             this.changeLoadingText("Checking database status",1);
-            this.initDB();
+            await this.initDB();
+            this.changeLoadingText("กำลังโหลดข้อมูลจากฐานข้อมูล",0);
+            this.changeLoadingText("Loading data from database",1);
+            await this.loadAppData();
             //If guest mode is true, skip login
             if (this.data.guestMode != true) {
                 this.changeLoadingText("กำลังเช็คสถานะการเข้าสู่ระบบ",0);
                 this.changeLoadingText("Checking your login status...",1);
-
-
                 // Check if the user is logged in
                 await this.checkLoginStatus();
                 // If the login result is false, return
@@ -119,40 +138,52 @@ class yaminowplaying {
                 }
             }else{
                 this.data.username = this.data.defaultusername;
+                //Ignore all the cache
+                for (let key in this.data.loadCacheStatus) {
+                    this.data.loadCacheStatus[key] = false;
+                }
                 console.log("[YAMILISTEN] Guest mode is true, skipping login");
                 //Slow update time
                 this.data.reloadTime = 15000;
                 this.data.limitRateTime = 1000;
             }
+
             
             this.changeLoadingText("กำลังเช็คสถานะชื่อผู้ใช้ LastFM",0);
             this.changeLoadingText("Checking your LastFM username...",1);
-            // Check if the lastFMUsername is present
-            let lastfmUsernameStatus = this.checkLastfmUsernamePresent();
-            // If the lastFMUsername is empty, show the login screen
-            if (lastfmUsernameStatus == 2) {
-                console.log("[YAMILISTEN] LastFM username is empty, showing login screen");
-                this.showScreen(this.screen.login);
-                //Change text in setlastfm part
-                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "You didn't set your Last.fm username in Yami Community";
-                document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "คุณยังไม่ได้ตั้งชื่อผู้ใช้ LastFM ใน Yami Community";
-                this.showPart(this.part.setlastfm,true);
-                this.hidePart(this.part.loginbtn);  
-            }else if (lastfmUsernameStatus == 1) {
-                console.log("[YAMILISTEN] LastFM username is present, check if the username is valid");
-                this.changeLoadingText("กำลังเช็คสถานะผู้ใช้ "+this.data.username+" ใน LastFM",0);
-                this.changeLoadingText("Checking your LastFM username (" + this.data.username + ")...",1);
-                let lastfmResult =  await this.getMyLastFMProfile();
-                // If the result is false, show the login screen
-                if (lastfmResult == false) {
-                    console.log("[YAMILISTEN] LastFM username is invalid, showing login screen");
+
+            if (this.data.loadCacheStatus['username'] == true && this.data.username != undefined && this.data.username != null) {
+                    console.log("[YAMILISTEN] [Cached] LastFM username is " + this.data.username);
+                    console.log("[YAMILISTEN] [Cached] LastFM profile:", this.data.profile);
+            }else{
+                console.log("[YAMILISTEN] LastFM username is not present in indexedDB, skipping getting LastFM username");
+                 // Check if the lastFMUsername is present
+                let lastfmUsernameStatus = this.checkLastfmUsernamePresent();
+                // If the lastFMUsername is empty, show the login screen
+                if (lastfmUsernameStatus == 2) {
+                    console.log("[YAMILISTEN] LastFM username is empty, showing login screen");
                     this.showScreen(this.screen.login);
                     //Change text in setlastfm part
-                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
-                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "You didn't set your Last.fm username in Yami Community";
+                    document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "คุณยังไม่ได้ตั้งชื่อผู้ใช้ LastFM ใน Yami Community";
                     this.showPart(this.part.setlastfm,true);
-                    this.hidePart(this.part.loginbtn);
-                    return;
+                    this.hidePart(this.part.loginbtn);  
+                }else if (lastfmUsernameStatus == 1) {
+                    console.log("[YAMILISTEN] LastFM username is present, check if the username is valid");
+                    this.changeLoadingText("กำลังเช็คสถานะผู้ใช้ "+this.data.username+" ใน LastFM",0);
+                    this.changeLoadingText("Checking your LastFM username (" + this.data.username + ")...",1);
+                    let lastfmResult =  await this.getMyLastFMProfile();
+                    // If the result is false, show the login screen
+                    if (lastfmResult == false) {
+                        console.log("[YAMILISTEN] LastFM username is invalid, showing login screen");
+                        this.showScreen(this.screen.login);
+                        //Change text in setlastfm part
+                        document.querySelector(this.part.setlastfm).querySelectorAll("h2")[0].textContent = "Your LastFM username is invalid or not found, please set your LastFM username again";
+                        document.querySelector(this.part.setlastfm).querySelectorAll("h2")[1].textContent = "ชื่อผู้ใช้ LastFM ของคุณไม่ถูกต้อง กรุณาตั้งชื่อผู้ใช้ LastFM ใหม่";
+                        this.showPart(this.part.setlastfm,true);
+                        this.hidePart(this.part.loginbtn);
+                        return;
+                    }
                 }
             }
 
@@ -169,17 +200,45 @@ class yaminowplaying {
                 return;
             }
 
+
+            // Check if the friends is empty
             this.changeLoadingText("กำลังเช็คสถานะเพื่อนของ "+this.data.username+" ใน LastFM",0);
             this.changeLoadingText("Checking your LastFM friends...",1);
-            this.data.friends = await this.getAllFriendsData(this.data.username,true);
+            // Check if the cache is present
+            if (this.data.loadCacheStatus['friends'] == true && this.data.friends != undefined && this.data.friends != null) {
+                    console.log("[YAMILISTEN] [Cached] Friends data:", this.data.friends);
+                    this.data.friendscount = Object.keys(this.data.friends).length;
+                    console.log("[YAMILISTEN] [Cached] Friends count:", this.data.friendscount);
+            }else{
+                console.log("[YAMILISTEN] Friends data is not present in indexedDB, skipping getting friends data");
+                // Get all friends data
+                this.data.friends = await this.getAllFriendsData(this.data.username,true);
+                this.data.friendscount = Object.keys(this.data.friends).length;
+            }
+
+            // Check if the friends is empty
             this.changeLoadingText("รับข้อมูลเพื่อน "+this.data.friendscount+" คนของ "+this.data.username+" สำเร็จ",0);
             this.changeLoadingText("Successfully fetched " + this.data.friendscount + " friends of " + this.data.username,1);
-            this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,true,true);
+
+            //Check if the cache is present for recent tracks
+            if (this.data.loadCacheStatus['recenttracks'] == true && this.data.recenttracks != undefined && this.data.recenttracks != null) {
+                console.log("[YAMILISTEN] [Cached] Recent tracks:", this.data.recenttracks);
+            }else{
+                console.log("[YAMILISTEN] Last data is not present in indexedDB, skipping getting last data");
+                // Get the recent tracks of all friends
+                this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,true,true);
+            }
+
             this.removeAllNowPlayingBox();
             this.createAllNowPlayingBox();
             this.updateAllNowPlayingBox();
             this.changeBoxOrder();
             this.showScreen(this.screen.listen);
+            //Try to reload again if cache is used
+            if (this.data.loadCacheStatus['recenttracks'] == true && this.data.recenttracks != undefined && this.data.recenttracks != null) {
+                console.log("[YAMILISTEN] [Cached] Cache is used, trying to do background refresh...");
+                this.refresh();
+            }
 
             this.data.reloadTime = this.calculateTimeToWait();
 
@@ -188,6 +247,14 @@ class yaminowplaying {
                 console.log("[YAMILISTEN] Refreshing...");
                 this.refresh();
             }, this.data.reloadTime);
+
+            //Save app data to indexedDB every 30 seconds
+            setInterval(() => {
+                console.log("[YAMILISTEN] Saving app data to indexedDB...");
+                this.savingAppData();
+            }, 30000);
+            
+
         }
 
 
@@ -210,6 +277,7 @@ class yaminowplaying {
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,false,true);
             this.updateAllNowPlayingBox();
             this.changeBoxOrder();
+            this.savingAppData();
         }
 
         navigateToTrackPage(username){
@@ -222,6 +290,50 @@ class yaminowplaying {
             }catch(error){
                 console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
                 console.log("[WAYI] Data: " + data);
+            }
+        }
+
+        savingAppData() {
+            this.setAppData('yamiuserdata', this.data.yamiuserdata);
+            this.setAppData('profile', this.data.profile);
+            this.setAppData('friends', this.data.friends);
+            this.setAppData('lastData', this.data.lastData);
+            this.setAppData('recenttracks', this.data.recenttracks);
+            this.setAppData('username', this.data.username);
+            this.setAppData('timeSaved', {
+                "yamiuserdata": Date.now(),
+                "profile": Date.now(),
+                "friends": Date.now(),
+                "lastData": Date.now(),
+                "recenttracks": Date.now(),
+                "username": Date.now(),
+            });
+            this.setAppData('globalTimeSaved', Date.now());
+            console.log("[YAMILISTEN] [Saved] Saved app data to indexedDB at " + Date.now());
+        }
+
+        async loadAppData() {
+            try {
+                // Check if the time of data is not expired
+                let timeSaved = await this.getAppData('timeSaved');
+                for (let key in this.data.timeCacheExpire) {
+                    try{
+                        if (Date.now() - timeSaved[key] < this.data.timeCacheExpire[key]) {
+                            console.log("[YAMILISTEN] " + key + " data is present in indexedDB and not expired, using it..");
+                            this.data[key] = await this.getAppData(key);
+                            this.data.loadCacheStatus[key] = true;
+                            console.log("[YAMILISTEN] [Cached] " + key + " data:", this.data[key]);
+                        }
+                    }catch(error){
+                        console.log("[YAMILISTEN] " + key + " data is not present in indexedDB, skipping getting " + key + " data");
+                    }
+                }
+                console.log("[YAMILISTEN] [Loaded] Loaded app data from indexedDB at " + Date.now());
+                console.log("[YAMILISTEN] [Loaded] App data:", this.data);
+                return false;
+            } catch (error) {
+                console.log("[YAMILISTEN] Error while loading app data from indexedDB: " + error);
+                return false;
             }
         }
 
@@ -285,6 +397,14 @@ class yaminowplaying {
         
 
         async getYamiUserData() {
+
+            // If IndexDB has the data, use it
+            if (app.data.loadCacheStatus['yamiuserdata'] == true && app.data.yamiuserdata != undefined && app.data.yamiuserdata != null) {
+                this.handleYamiUserData(this.data.yamiuserdata);
+                console.log("[YAMILISTEN] Yami user data is present in indexedDB, using it..");
+                return true;
+            }
+            
             // Get the Yami token from the cookie
             let yamiToken = this.getCookie("yami_token");
             // If the Yami token is empty, return false
@@ -664,9 +784,23 @@ class yaminowplaying {
         }
 
 
-        createNowPlayingBox(username) {
+        async createNowPlayingBox(username) {
             console.log("[YAMILISTEN] Creating box for " + username);
             username = this.fixName(username);
+            //Check if array is empty
+            if (this.data.recenttracks[username] == undefined) {
+                //Try to get the data again
+                console.log("[YAMILISTEN] Recent tracks of " + username + " is empty, trying to get the data again");
+                await this.getRecentTracks(username);
+                // Check if array is empty again
+                if (this.data.recenttracks[username] == undefined) {
+                    console.log("[YAMILISTEN] Recent tracks of " + username + " is empty, skipping create box");
+                    return;
+                }else{
+                    console.log("[YAMILISTEN] Recent tracks of " + username + " is not empty, continuing create box");
+                }
+                
+            }
             //Check if user have the song 
             if (this.data.recenttracks[username]["track"][0] == undefined) {
                 console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping create box");
@@ -723,12 +857,20 @@ class yaminowplaying {
                     console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping update box");
                     return;
                 }
+                //Check if box is already created
+                if (document.querySelectorAll(".nowplay-box-" + username).length == 0) {
+                    console.log("[YAMILISTEN] Box for " + username + " is not created, Trying to create box");
+                    await this.createNowPlayingBox(username);
+                    console.log("[YAMILISTEN] Box for " + username + " is created, Continuing update box");
+                }
+                
                 let box = document.querySelector(".nowplay-box-" + username);
                 let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
                 let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
                 let currentAlbum = box.querySelector(".nowplay-album").querySelector("h2").textContent;
                 let currentImage = window.getComputedStyle(box.querySelector(".nowplay-cover")).backgroundImage;
                 let currentImageURL = currentImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
+                let currentTotalScrobble = box.querySelector(".nowplay-extra").querySelector("h2").textContent;
 
                 let updatedTitle = this.data.recenttracks[username]["track"][0]["name"];
                 let updatedArtist = this.data.recenttracks[username]["track"][0]["artist"]["#text"];
@@ -736,6 +878,13 @@ class yaminowplaying {
                 let updatedImage = this.data.recenttracks[username]["track"][0]["image"][3]["#text"] || this.data.recenttracks[username]["track"][0]["image"][2]["#text"] || this.data.recenttracks[username]["track"][0]["image"][1]["#text"] || this.data.recenttracks[username]["track"][0]["image"][0]["#text"];
                 let updatedImageURL = updatedImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
                 let updatedAlbumImage = await this.getAlbumImage(username);
+                if(this.data.recenttracks[username]["@attr"] == undefined){
+                    this.data.recenttracks[username]["@attr"] = {
+                        "total": 0,
+                    }
+                }
+                let updatedTotalScrobble = "♪" + this.data.recenttracks[username]["@attr"]["total"];
+
                 console.log("[YAMILISTEN] Updated album image:", updatedAlbumImage);
 
                 let updatedEpoch = this.getListeningEpoch(username);
@@ -749,6 +898,9 @@ class yaminowplaying {
                 //Highlight the box if currently listening
                 if (updatedEpoch == 0) {
                     box.style.backgroundColor = "#ca0a7878";
+                    //Change icon of .icon-time.querySelector("i") to play icon
+                    box.querySelector(".icon-time").querySelector("i").classList.remove("fa-clock");
+                    box.querySelector(".icon-time").querySelector("i").classList.add("fa-play");
                     //Check song [1] if it's the same as [0] check the time of [1]
                     if(this.data.recenttracks[username]["track"][1] != undefined){
                         if(this.data.recenttracks[username]["track"][1]["name"] == updatedTitle){
@@ -794,9 +946,21 @@ class yaminowplaying {
                     }
                 }else{
                         box.style.backgroundColor = "#ffffff14";
+                        //Change icon of .icon-time.querySelector("i") to clock icon
+                        box.querySelector(".icon-time").querySelector("i").classList.remove("fa-play");
+                        box.querySelector(".icon-time").querySelector("i").classList.add("fa-clock");
+                        box.querySelector(".nowplay-time").querySelector("h2").textContent = timeText;
+                        // Clear the existing interval if it exists
+                        if (this.data.nowplayingTime.interval[username]) {
+                            clearInterval(this.data.nowplayingTime.interval[username]);
+                        }
+                }
+
+                if (currentTotalScrobble != updatedTotalScrobble) {
+                    console.log("[YAMILISTEN] Updating total scrobble of " + username + ' (' + updatedTitle + ')');
+                    box.querySelector(".nowplay-extra").querySelector("h2").textContent = updatedTotalScrobble;
                 }
                 
-
                 // If the data is the same as the current data, skip the update
                 if (currentTitle == updatedTitle && currentArtist == updatedArtist && currentAlbum == updatedAlbum && currentImageURL == updatedImageURL) {
                     console.log("[YAMILISTEN] Skipped box for " + username + ' (' + updatedTitle + ')');
@@ -825,6 +989,7 @@ class yaminowplaying {
                     if (currentImageURL != updatedAlbumImage) {
                         box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + updatedAlbumImage + ")";
                     }
+
                 }
             } catch (error) {
                 console.error('[YAMILISTEN] Error updating box:', error);
@@ -981,6 +1146,10 @@ class yaminowplaying {
             let box = document.querySelector(".nowplay-box-" + this.fixName(username));
             box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/watch?v=" + youtubeSongInfo['url'];
             box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
+            let ytIconPlay = box.querySelector(".yt-icon-play");
+            ytIconPlay.addEventListener("click", (event) => {
+                event.stopPropagation();
+            });
             // Use trackimg>official yt>unofficialyt>artistimg>altartistimg
             //Remove zoom class from the image
             if (box.querySelector(".nowplay-cover").classList.contains("cover-zoom")) {
@@ -1267,27 +1436,97 @@ class yaminowplaying {
         }
 
         // init the indexedDB
-        initDB() {
-            // Create the database
-            const request = indexedDB.open('yaminowplaying', 1);
+        async initDB() {
+            return new Promise((resolve, reject) => {
+                // Create the database
+                const request = indexedDB.open('yaminowplaying', 2);
 
-            // Create the object store
-            request.onupgradeneeded = () => {
-                console.log('[YAMILISTEN] Creating object store');
-                const db = request.result;
-                db.createObjectStore('cache');
-            };
+                // Create the object store
+                request.onupgradeneeded = () => {
+                    console.log('[YAMILISTEN] Creating object store');
+                    const db = request.result;
+                    if (db.objectStoreNames.contains('cache') !== true) {
+                        console.log('[YAMILISTEN] [DB] Creating cache object store in indexedDB');
+                        db.createObjectStore('cache');
+                    }
+                    if (db.objectStoreNames.contains('appdata') !== true){
+                        console.log('[YAMILISTEN] [DB] Creating appdata object store in indexedDB');
+                        db.createObjectStore('appdata');
+                    }
 
-            // Handle errors
+                };
+
+                // Handle errors
+                request.onerror = () => {
+                    console.error('[YAMILISTEN] Error opening indexedDB');
+                    reject();
+                };
+
+                // Handle success
+                request.onsuccess = () => {
+                    this.db = request.result;
+                    console.log('[YAMILISTEN] IndexedDB opened successfully');
+                    resolve();
+                };
+            });
+        }
+
+        // Save some data to indexedDB
+        setAppData(key, value) {
+            if (!this.db) {
+                console.log('[YAMILISTEN] Cannot set app data, indexedDB is not initialized');
+                return;
+            }
+
+            const transaction = this.db.transaction(['appdata'], 'readwrite');
+            const objectStore = transaction.objectStore('appdata');
+
+            const request = objectStore.put({
+                key,
+                value
+            }, key);
+
             request.onerror = () => {
-                console.error('[YAMILISTEN] Error opening indexedDB');
-            };
+                console.error('[YAMILISTEN] Error setting app data');
+            }
 
-            // Handle success
             request.onsuccess = () => {
-                this.db = request.result;
-                console.log('[YAMILISTEN] IndexedDB opened successfully');
-            };
+                console.log('[YAMILISTEN] App data set successfully for key', key);
+                console.log('[YAMILISTEN] App data value:', value);
+            }
+        }
+
+        // Get some data from indexedDB
+        getAppData(key) {
+            return new Promise((resolve, reject) => {
+                if (!this.db) {
+                    console.log('[YAMILISTEN] [DB] Cannot get app data, indexedDB is not initialized');
+                    reject('[YAMILISTEN] [DB] Cannot get app data, indexedDB is not initialized');
+                    return;
+                }
+
+                const transaction = this.db.transaction(['appdata'], 'readonly');
+                const objectStore = transaction.objectStore('appdata');
+                const request = objectStore.get(key);
+
+                transaction.onerror = () => {
+                    console.error('[YAMILISTEN] [DB] Error getting app data');
+                    reject('[YAMILISTEN] [DB] Error getting app data');
+                };
+
+                transaction.oncomplete = () => {
+                    const appData = request.result;
+                    if (!appData) {
+                        console.log('[YAMILISTEN] [DB] App data not found for key', key);
+                        resolve(null);
+                        return;
+                    }
+
+                    console.log('[YAMILISTEN] [DB] App data found for key', key);
+                    console.log(appData.value);
+                    resolve(appData.value);
+                };
+            });
         }
 
 
@@ -1477,9 +1716,6 @@ class yaminowplaying {
         
             const minutes = Math.floor(diffInSeconds / 60);
             const seconds = diffInSeconds % 60;
-
-            console.log("[YAMILISTEN] Debug Song time: " + diffInSeconds + " Current time: " + currentTime + " Song current: " + epoch);
-        
             return minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
         }
         
@@ -1519,375 +1755,15 @@ class yaminowplaying {
 //If in the test environment, do not run the code
 //if url contains post.php add testenv flag
 if(window.location.href.indexOf("preview") == -1){
-    var app = new yaminowplaying();
+    // Check if app is already running
+    if (app) {
+        console.log('[YAMILISTEN] App is already running');
+    }else{
+        console.log('[YAMILISTEN] App is not running, starting...');
+        var app = new yaminowplaying();
+    }
+    
 
 }else{
     console.log("Test environment detected - not running code");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// REF only from V1
-// Obsolete
-
-        // createNowPlayingBox(id, data) {
-        //     id = this.convertToUniqueID(id);
-        //     // Clone the template
-        //     let box = document.querySelector(this.element.template).cloneNode(true);
-        //     box.classList.add("nowplay-box");
-        //     box.classList.add("nowplay-box-" + id);
-        //     box.classList.add("animated");
-        //     box.classList.add("bounceInUp");
-        //     box.querySelector(".nowplay-name").querySelector("h2").textContent = data.name;
-        //     box.querySelector(".nowplay-avatar").style.backgroundImage = "url(" + data.image + ")";
-        //     box.querySelector(".nowplay-songinfo").classList.add("animated");
-        //     box.querySelector(".nowplay-songinfo").classList.add("slideInUp");
-        //     box.style.display = "flex";
-        //     box.style.visibility = "visible";
-        //     document.querySelector(this.element.listarea).appendChild(box);
-        //     console.log("[WAYI] Created box for " + id + ' (' + data.name + ')');
-
-        //     //[1.0.6.001] Add event listener to the nowplay-usernamebox to go to the user's profile
-        //     box.querySelector(".nowplay-usernamebox").addEventListener("click", () => {
-        //         console.log("[WAYI] Go to " + id + ' (' + data.name + ') profile');
-        //         window.open(data.url, '_blank');
-        //     });
-
-        //     //[1.0.6.001] Add event listener to the nowplay-songinfo to go to the track's page
-        //     box.querySelector(".nowplay-songinfo").addEventListener("click", () => {
-        //         this.navigateToTrackPage(data.name);
-        //     });
-
-        //     //[1.0.6.001] Add cursor pointer to the nowplay-usernamebox and nowplay-songinfo
-        //     box.querySelector(".nowplay-usernamebox").style.cursor = "pointer";
-        //     box.querySelector(".nowplay-songinfo").style.cursor = "pointer";
-
-        // }
-
-
-
-        // //[1.0.6.001] Because of <a> breaks the element in UI, we need to use this function to navigate to the track's page instead
-        // navigateToTrackPage(username){
-        //     try{
-        //         //Get data from currentData
-        //         var data = this.data.currentData;
-        //         //Get the track data
-        //         var track = data[username][0];
-        //         //Navigate to the track page
-        //         window.open(track.URL, '_blank');
-        //     }catch(error){
-        //         console.log("[WAYI] Error while navigating to track page: " + error + " With username: " + username);
-        //         console.log(data);
-        //     }
-        // }
-
-        // updateNowPlayingBox(id, data) {
-        //     // normalize the id to lowercase
-        //     id = this.convertToUniqueID(id);
-        //     let box = document.querySelector(".nowplay-box-" + id);
-        //     // Retreive the current data
-        //     let currentTitle = box.querySelector(".nowplay-title").querySelector("h2").textContent;
-        //     let currentArtist = box.querySelector(".nowplay-artist").querySelector("h2").textContent;
-        //     let currentAlbum = box.querySelector(".nowplay-album").querySelector("h2").textContent;
-        //     let currentImage = window.getComputedStyle(box.querySelector(".nowplay-cover")).backgroundImage;
-        //     let currentImageURL = currentImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
-        //     // let currentURL = box.querySelector(".nowplay-icon").querySelector("a").href;
-        //     let albumImage = this.albumImage(data,id);
-        //     // If the data is the same as the current data, skip the update
-        //     if (currentTitle == data.track && currentArtist == data.artist && currentAlbum == data.album && currentImageURL == albumImage) {
-        //         console.log("[WAYI] Skipped box for " + id + ' (' + data.track + ') because the data is the same');
-        //         return;
-        //     }
-        //     //Else update the box
-        //     if (currentTitle != data.track) {
-        //         box.querySelector(".nowplay-title").querySelector("h2").textContent = data.track
-        //         // If track is updated, Hide and show the title to make the animation
-        //         box.querySelector(".nowplay-songinfo").style.display = "none";
-        //         box.querySelector(".nowplay-songinfo").style.visibility = "hidden";
-        //         setTimeout(() => {
-        //             box.querySelector(".nowplay-songinfo").style.display = "flex";
-        //             box.querySelector(".nowplay-songinfo").style.visibility = "visible";
-        //         }, 100);
-
-        //         //[1.0.7.001] Update the yt-icon-play link to the current track
-        //         if(data.yt_cover_image.url != undefined){
-        //             box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/watch?v=" + data.yt_cover_image.url;
-        //             box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
-        //         }else{
-        //             box.querySelector(".yt-icon-play").querySelector("a").href = "https://music.youtube.com/search?q=" + data.track + " " + data.artist;
-        //             box.querySelector(".yt-icon-play").querySelector("a").target = "_blank";
-        //         }
-                
-        //     }else{
-        //         console.log("[WAYI] Skipped title update for " + id + ' (' + data.track + ') because the data is the same');
-        //     }
-        //     if (currentArtist != data.artist) {
-        //         box.querySelector(".nowplay-artist").querySelector("h2").textContent = data.artist
-        //     }else{
-        //         console.log("[WAYI] Skipped artist update for " + id + ' (' + data.track + ') because the data is the same');
-        //     }
-        //     if (currentAlbum != data.album) {
-        //         box.querySelector(".nowplay-album").querySelector("h2").textContent = data.album
-        //     }else{
-        //         console.log("[WAYI] Skipped album update for " + id + ' (' + data.track + ') because the data is the same');
-        //     }
-        //     if (currentImageURL != albumImage) {
-        //         box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + albumImage + ")";
-        //     }else{
-        //         console.log("[WAYI] Skipped album image update for " + id + ' (' + data.track + ') because the data is the same');
-        //     }
-
-        //     // box.querySelector(".nowplay-cover").style.backgroundImage = "url(" + (data.album_image ? data.album_image : data.alt_artist_image) + ")";
-        //     let timetext = this.timeSince(data.epoch);
-        //     let timediff = (this.timeDiff(data.epoch)/1000);
-        //     if (timetext == "ฟังอยู่ตอนนี้") {
-        //         console.log("[WAYI] " + id + " is now playing (" + data.track + " - " + data.artist + ")");
-        //         box.classList.add("ynp-playing");
-        //     } else if (timediff < 180) { 
-        //         console.log("[WAYI] " + id + " is playing (" + data.track + " - " + data.artist + ") recently");
-        //         box.classList.add("ynp-playing");
-        //     }
-        //     else {
-        //         box.classList.remove("ynp-playing");
-        //     }
-                
-        //     box.querySelector(".nowplay-time").querySelector("h2").textContent = timetext
-        //     // box.querySelector(".nowplay-icon").querySelector("a").href = data.URL;
-        //     // box.querySelector(".nowplay-icon").querySelector("a").target = "_blank";
-        //     console.log("[WAYI] Updated box for " + id + ' (' + data.track + ')');
-        // }
-
-
-        // albumImage(data,id="Not Specified") {
-        //     //[1.0.7.001] Add yt_cover_image to the priority
-        //     //The priority is yt(official) > image > album_image > yt (Unoffical) > alt_artist_image
-        //     if(data.yt_cover_image.offical == true){
-        //         console.log("[WAYI] Using Youtube official image for " + id + ' (' + data.track + ')');
-        //         // Add zoom class to the cover because the image having black bar on the top and bottom
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping adding zoom class");
-        //         }
-        //         return data.yt_cover_image.cover;
-        //     }    
-        //     else if (data.image && data.image != "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png") {
-        //         console.log("[WAYI] Using image for " + id + ' (' + data.track + ')');
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
-        //         }
-        //         return data.image;
-                
-                
-        //     } 
-        //     else if (data.album_image) {
-        //         console.log("[WAYI] Using album image for " + id + ' (' + data.track + ')');
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
-        //         }
-        //         return data.album_image;
-        //     }
-        //     else if(data.yt_cover_image.url != undefined){
-        //         console.log("[WAYI] Using Youtube unofficial image for " + id + ' (' + data.track + ')');
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.add("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping adding zoom class");
-        //         }
-        //         return data.yt_cover_image.cover;
-        //     }
-        //     else if (data.alt_artist_image) {
-        //         console.log("[WAYI] Fallback Using alt artist image for " + id + ' (' + data.track + ')');
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
-        //         }
-        //         return data.alt_artist_image;
-        //     }
-        //     else{
-        //         console.log("[WAYI] Fallback Using default image for " + id + ' (' + data.track + ')');
-        //         if(id != "Not Specified"){
-        //             document.querySelector(".nowplay-box-" + id).querySelector(".nowplay-cover").classList.remove("cover-zoom");
-        //         }else{
-        //             console.log("[WAYI] ID is not specified, skipping removing zoom class");
-        //         }
-        //         return "https://lastfm.freetls.fastly.net/i/u/300x300/c6f59c1e5e7240a4c0d427abd71f3dbb.jpg";
-        //     }
-        // }
-
-
-
-
-
-        // removeNowPlayingBox(id) {
-        //     id = this.convertToUniqueID(id);
-        //     let box = document.querySelector(".nowplay-box-" + id);
-        //     box.remove();
-        //     console.log("[WAYI] Removed box for " + id);
-        // }
-
-        // removeAllNowPlayingBox() {
-        //     let boxes = document.querySelectorAll(".nowplay-box");
-        //     boxes.forEach(box => {
-        //         box.remove();
-        //     });
-        //     console.log("[WAYI] Removed all boxes");
-        // }
-
-
-
-        // updateDataFromAPI(){
-        //     fetch(this.data.path + this.data.username)
-        //     .then(response => response.json())
-        //     .then(data => {
-        //         // Hide loading (invisible)
-        //         document.querySelector(this.element.loading).style.display = "none";
-        //         this.compare(data);
-        //     });
-
-        // }
-
-        // reinit() {
-        //     this.data.lastData = [];
-        //     this.data.currentData = [];
-        // }
-
-        // init(){
-        //     // Show loading (visible)
-        //     document.querySelector(this.element.loading).style.display = "flex";
-        //     this.updateDataFromAPI();
-        //     setInterval(() => {
-        //         this.updateDataFromAPI();
-        //     }, 10000);
-
-        // }
-
-        // compare(data) {
-        //     this.data.currentData = data;
-        //     // If last data and current data is the same, skip the update
-        //     if (JSON.stringify(this.data.lastData) === JSON.stringify(this.data.currentData)) {
-        //         console.log("[WAYI] Skipped data update because the data is the same");
-        //         return;
-        //     }
-        //     if (data !== this.data.lastData) {
-        //         if (typeof this.data.createdBox[data.self.name] === 'undefined') {
-        //             this.createSelfBox(data);
-        //             this.data.createdBox[data.self.name] = true;
-        //         }
-        //         // {self.username} , data.{self.username}
-        //         this.updateNowPlayingBox(data.self.name, data[data.self.name][0]);
-        //         data.friends.forEach(friend => {
-        //             // Compare the last data and current data
-        //                 //if data[friend.name][0] is undefined that means the data limit is reached (skip the user)
-        //                 if (typeof data[friend.name] === 'undefined') {
-        //                     console.log("[WAYI] Skipped " + friend.name + " because of data limit reached (Backend limit)");
-        //                     // Show the error message from data[error] if it's not undefined
-        //                     if (typeof data.error !== 'undefined') {
-        //                         console.log("[WAYI] Error from backend: " + data.error);
-        //                     }
-        //                     return;
-        //                 }
-        //                 if (typeof this.data.createdBox[friend.name] === 'undefined') {
-        //                     this.createNowPlayingBox(friend.name, friend);
-        //                     this.data.createdBox[friend.name] = true;
-        //                 }
-        //                 this.updateNowPlayingBox(friend.name, data[friend.name][0]);
-        //                 // if "" that means the user is playing something now so set the epoch to current epoch
-        //                 let currentEpoch = data[friend.name][0].epoch == "" ? Math.floor(Date.now() / 1000) : data[friend.name][0].epoch;
-        //                 this.data.epochList[friend.name] = currentEpoch;
-        //             });
-
-        //         this.changeElementOrder();
-        //         this.data.lastData = this.data.currentData;
-        //     }
-        // }
-
-        // orderByEpoch() {
-        //     let sorted = [];
-        //     for (let key in this.data.epochList) {
-        //         sorted.push([key, this.data.epochList[key]]);
-        //     }
-        //     sorted.sort(function(a, b) {
-        //         return a[1] - b[1];
-        //     });
-        //     return sorted.reverse();
-        // }
-
-
-        // changeElementOrder() {
-        //     let sorted = this.orderByEpoch();
-        //     this.data.currentOrder = sorted;
-        //     if (JSON.stringify(this.data.lastOrder) === JSON.stringify(this.data.currentOrder)) {
-        //         console.log("[WAYI] Skipped order update because the order is the same");
-        //         return;
-        //     }
-        //     let boxes = document.querySelectorAll(".nowplay-box");
-        //     sorted.forEach((item, index) => {
-        //         let box = document.querySelector(".nowplay-box-" + this.convertToUniqueID(item[0]));
-        //         box.style.order = index;
-        //         console.log("[WAYI] Changed order of " + item[0] + ' (' + this.convertToUniqueID(item[0]) + ') to ' + index);
-        //     });
-        //     this.data.lastOrder = this.data.currentOrder;
-        // }
-
-
-        // createSelfBox(data) {
-        //     this.createNowPlayingBox(data.self.name, data.self);
-        // }
-
-        // changeUser(username) {
-        //     this.data.username = username;
-        //     this.reinit();
-        // }
-
-
-
-
-
-
-// // ?username=Nicezki
-// try {
-//     var username = window.location.search.split('username=')[1];
-// } catch (error) {
-//     var username = "Nicezki";
-// }
-
-// if (username == undefined) {
-//     username = "Nicezki";
-// }
-
-// var app = new yaminowplaying(username);
