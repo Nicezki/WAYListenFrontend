@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 2.0.0 DEV200 Pre-release 1
+// VERSION 2.0.0 DEV210 Pre-release 2
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.db = null;
@@ -73,6 +73,12 @@ class yaminowplaying {
             friendscount : 0,
             data : {},
             lastData : {},
+            nowplayingTime : {
+                timeCurrent: {},
+                songCurrent: {},
+                interval: {},
+
+            },
             errorTimeout : 0,
             reloadTime: 10000,
             limitRateTime: 200,
@@ -87,6 +93,7 @@ class yaminowplaying {
 
 
         async init() {
+            console.log("[YAMILISTEN] You are running development version 2");
             this.addBtnEvent();
             this.hidePart(this.part.supporter);
             this.showScreen(this.screen.loading);
@@ -168,6 +175,7 @@ class yaminowplaying {
             this.changeLoadingText("รับข้อมูลเพื่อน "+this.data.friendscount+" คนของ "+this.data.username+" สำเร็จ",0);
             this.changeLoadingText("Successfully fetched " + this.data.friendscount + " friends of " + this.data.username,1);
             this.data.recenttracks = await this.getAllFriendsRecentTracks(false,1,true,true);
+            this.removeAllNowPlayingBox();
             this.createAllNowPlayingBox();
             this.updateAllNowPlayingBox();
             this.changeBoxOrder();
@@ -645,12 +653,28 @@ class yaminowplaying {
         }
 
 
+        removeAllNowPlayingBox() {
+            console.log("[YAMILISTEN] Removing all now playing box");
+            let boxes = document.querySelectorAll(".nowplay-box");
+            boxes.forEach(box => {
+                box.remove();
+            }
+            );
+            console.log("[YAMILISTEN] Removed all now playing box");
+        }
+
+
         createNowPlayingBox(username) {
             console.log("[YAMILISTEN] Creating box for " + username);
             username = this.fixName(username);
             //Check if user have the song 
             if (this.data.recenttracks[username]["track"][0] == undefined) {
                 console.log("[YAMILISTEN] User " + username + " doesn't have the song, skipping create box");
+                return;
+            }
+            //Check if box is already created
+            if (document.querySelector(".nowplay-box-" + username) != null) {
+                console.log("[YAMILISTEN] Box for " + username + " is already created, skipping create box");
                 return;
             }
             let box = this.templateElement.nowplaybox.cloneNode(true);
@@ -691,6 +715,7 @@ class yaminowplaying {
             console.log("[YAMILISTEN] Created box for " + username);
         }
 
+
         async updateNowPlayingBox(username) {
             try {
                 username = this.fixName(username);
@@ -715,10 +740,60 @@ class yaminowplaying {
 
                 let updatedEpoch = this.getListeningEpoch(username);
                 let timeText = this.timeSince(updatedEpoch);
-                box.querySelector(".nowplay-time").querySelector("h2").textContent = timeText;
+                
+                //Don't update if the time text is the same
+                if (box.querySelector(".nowplay-time").querySelector("h2").textContent == timeText && updatedEpoch != 0) {
+                    console.log("[YAMILISTEN] Skipped box for " + username + ' (' + updatedTitle + ')');
+                    return;
+                }
                 //Highlight the box if currently listening
                 if (updatedEpoch == 0) {
                     box.style.backgroundColor = "#ca0a7878";
+                    //Check song [1] if it's the same as [0] check the time of [1]
+                    if(this.data.recenttracks[username]["track"][1] != undefined){
+                        if(this.data.recenttracks[username]["track"][1]["name"] == updatedTitle){
+                            //Check if the songCurrent (time uts) is the same as the recenttracks [1] (time uts)
+                            //If yes That means the song is still playing so still not reset the time interval
+                            //If no That means the song is changed so reset the time interval 
+                            if (this.data.nowplayingTime.songCurrent[username] !== parseInt(this.data.recenttracks[username]["track"][1]["date"]["uts"])) {
+                                // Clear the existing interval if it exists
+                                if (this.data.nowplayingTime.interval[username]) {
+                                    clearInterval(this.data.nowplayingTime.interval[username]);
+                                }
+                            
+                                // Save the time of [1] in data.nowplayingTime.songCurrent
+                                this.data.nowplayingTime.songCurrent[username] = parseInt(this.data.recenttracks[username]["track"][1]["date"]["uts"]);
+                            
+                                // Get a reference to the time element
+                                const timeElement = box.querySelector(".nowplay-time").querySelector("h2");
+                            
+                                // Set a new interval to update the time every 1 second 
+                                this.data.nowplayingTime.interval[username] = setInterval(() => {
+                                    const songTime = this.data.nowplayingTime.songCurrent[username];
+                            
+                                    // Display the absolute value of songTime to show the time elapsed since the song started playing
+                                    const timeText = this.timeSinceMin(Math.abs(songTime));
+                                    
+                                    // Update the time element directly
+                                    timeElement.textContent = "ฟังอยู่ (" + timeText + ")";
+                                }, 500);
+                            }else{
+                                // Do nothing
+                                console.log("[YAMILISTEN] The song is still playing, skipping update time");
+                            }
+                            
+                            
+                            
+                        }else{
+                            // Clear the existing interval if it exists
+                            if (this.data.nowplayingTime.interval[username]) {
+                                clearInterval(this.data.nowplayingTime.interval[username]);
+                            }
+                            box.querySelector(".nowplay-time").querySelector("h2").textContent = timeText;
+                        }
+                    }
+                }else{
+                        box.style.backgroundColor = "#ffffff14";
                 }
                 
 
@@ -1108,7 +1183,7 @@ class yaminowplaying {
 
             var cacheData = null;
 
-            await this.getCache(originalArtist, 'artist_alt', 86400000)
+            await this.getCache(originalArtist, 'artist_alt', 86400000*60)
             .then(value => {
                 console.log('[YAMILISTEN] Cache has value present:', value);
                 cacheData = value;
@@ -1284,7 +1359,7 @@ class yaminowplaying {
 
                     if (isCacheExpired) {
                         console.log('[YAMILISTEN] Cache expired for key', key);
-                        this.deleteCache(key);
+                        this.removeCache(key);
                         resolve(null);
                         return;
                     }
@@ -1388,6 +1463,26 @@ class yaminowplaying {
         
             return similarity;
         }
+
+
+        timeSinceMin(epoch) {
+            // Format: 00:00 (Minutes:Seconds)
+            // No hours because it's not needed, just count as minutes
+            const currentTime = Math.floor(Date.now() / 1000);
+            const diffInSeconds = currentTime - epoch;
+        
+            if (epoch === undefined || epoch === "" || diffInSeconds < 60) {
+                return "ฟังอยู่ตอนนี้";
+            }
+        
+            const minutes = Math.floor(diffInSeconds / 60);
+            const seconds = diffInSeconds % 60;
+
+            console.log("[YAMILISTEN] Debug Song time: " + diffInSeconds + " Current time: " + currentTime + " Song current: " + epoch);
+        
+            return minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
+        }
+        
         
 
         timeSince(epoch) {
