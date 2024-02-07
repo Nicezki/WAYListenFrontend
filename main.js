@@ -137,6 +137,7 @@ class yaminowplaying {
             this.changeTheme(theme);
             this.hidePart(this.part.supporter);
             this.hidePart(this.part.supportersetting);
+            this.hidePart(this.part.supporterbtn);
             this.showScreen(this.screen.loading);
             this.showPart(this.part.loaddetail);
             
@@ -324,9 +325,10 @@ class yaminowplaying {
                 console.log("[YAMILISTEN] Changing theme to Default: " + theme);
             }
             if  (theme == "themeForest") {
-                //Check if supporter is 1 or 2
-                if (this.data.yamiuserdata.supporter == 1) {
+                //If you are not a supporter1 or 2, skip changing theme
+                if (this.data.yamiuserdata.supporter == 0) {
                     console.log("[YAMILISTEN] You are not a supporter, skipping changing theme to Forest");
+                    alert("ฟีเจอร์นี้สำหรับผู้สนับสนุน Yami Community ระดับ I ขึ้นไปเท่านั้น");
                     return;
                 }
                 //#20472ABD at 63% to #20472AFA at 100% at 265 degrees
@@ -551,11 +553,9 @@ class yaminowplaying {
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[0].textContent = "SUPPORTER II";
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[1].textContent = "ขอบคุณที่เป็นส่วนหนึ่งของการสนับสนุน​";
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[2].textContent = "ภาพปกโปรไฟล์ของคุณจะเป็นพื้นหลังของหน้าจอนี้​";
-                // Show supporter setting button
-                this.showPart(this.part.supporterbtn);
-
                 // Show the supporter part
                 this.showPart(this.part.supporter);
+                this.showPart(this.part.supporterbtn);
                 // Set the bg of .main-app-yplay to cover image (Overlay not the bg)
                 document.querySelector(".main-app-yplay").style.backgroundImage = "url(" + data.coverPhotoUrl + ")";
                 document.querySelector(".main-app-yplay").style.backgroundSize = "cover";
