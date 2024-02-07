@@ -1,7 +1,7 @@
 // WHAT ARE YOU LISTENING
 // BY NICEZKI
 // BASED ON LAST.FM API
-// VERSION 2.0.0 DEV222 Pre-release 2
+// VERSION 2.0.0 DEV301 Pre-release 3
 class yaminowplaying {
     constructor(username="Nicezki") {
         this.db = null;
@@ -19,19 +19,33 @@ class yaminowplaying {
             login : "#btn-login",
             guest : "#btn-guest",
             setlastfm : "#btn-setlastfm",
+            spsetting : "#btn-spsetting",
         }
         this.part = {
             loginbtn : ".part-loginbtnz",
             setlastfm : ".part-setlastfm",
             loaddetail : ".part-loaddetail",
             supporter : ".part-supporter",
+            supportersetting : ".part-supportersetting",
+            supporterbtn : ".btn-spsetting",
         }
+        this.selElementListen = {
+            themeAura : ".conf-theme-aura",
+            themeForest : ".conf-theme-forest",
+        }
+
         this.templateElement = {
             nowplaybox : ""
         }
 
+        this.appElement = {
+            mainoverlay : ".app-bg-overlay",
+        }
+
         this.config = {
-            remove : "['/\s-\sTopic$/','/\s-\sSingle$/','/\s-\sหัวข้อ$/']"
+            remove : "['/\s-\sTopic$/','/\s-\sSingle$/','/\s-\sหัวข้อ$/']",
+            spconfig : false,
+            spplayingcolor : "#ca0a7878",
         }
 
 
@@ -113,13 +127,20 @@ class yaminowplaying {
         async init() {
             console.log("[YAMILISTEN] You are running development version 2");
             this.addBtnEvent();
-            this.hidePart(this.part.supporter);
-            this.showScreen(this.screen.loading);
-            this.showPart(this.part.loaddetail);
             // Init the database
             this.changeLoadingText("กำลังเช็คสถานะฐานข้อมูล",0);
             this.changeLoadingText("Checking database status",1);
             await this.initDB();
+            //Load the theme from indexedDB
+            let theme = await this.getAppData('theme') || "themeAura";
+            console.log("[YAMILISTEN] Changing theme to Default: " + theme);
+            this.changeTheme(theme);
+            this.hidePart(this.part.supporter);
+            this.hidePart(this.part.supportersetting);
+            this.showScreen(this.screen.loading);
+            this.showPart(this.part.loaddetail);
+            
+            
             this.changeLoadingText("กำลังโหลดข้อมูลจากฐานข้อมูล",0);
             this.changeLoadingText("Loading data from database",1);
             await this.loadAppData();
@@ -201,6 +222,9 @@ class yaminowplaying {
             }
 
 
+
+
+
             // Check if the friends is empty
             this.changeLoadingText("กำลังเช็คสถานะเพื่อนของ "+this.data.username+" ใน LastFM",0);
             this.changeLoadingText("Checking your LastFM friends...",1);
@@ -270,7 +294,60 @@ class yaminowplaying {
             document.querySelector(this.btn.setlastfm).addEventListener("click", () => {
                 this.setLastfmUsernameFronYami();
             });
+            document.querySelector(this.btn.spsetting).addEventListener("click", () => {
+                this.toggleSupporterSetting();
+            });
+
+            //Add listener to theme selector
+            for (let key in this.selElementListen) {
+                document.querySelector(this.selElementListen[key]).addEventListener("click", () => {
+                    this.changeTheme(key);
+                });
+            }
         }
+
+        toggleSupporterSetting() {
+            if (this.config.spconfig == false) {
+                this.showPart(this.part.supportersetting);
+                this.config.spconfig = true;
+            }else{
+                this.hidePart(this.part.supportersetting);
+                this.config.spconfig = false;
+            }
+        }
+
+
+        changeTheme(theme) {
+            if (theme == "Default") {
+                //Load the theme from indexedDB
+                theme = this.getAppData('theme') || "themeAura";
+                console.log("[YAMILISTEN] Changing theme to Default: " + theme);
+            }
+            if  (theme == "themeForest") {
+                //Check if supporter is 1 or 2
+                if (this.data.yamiuserdata.supporter == 1) {
+                    console.log("[YAMILISTEN] You are not a supporter, skipping changing theme to Forest");
+                    return;
+                }
+                //#20472ABD at 63% to #20472AFA at 100% at 265 degrees
+                console.log("[YAMILISTEN] Changing theme to Forest");
+                document.querySelector(this.appElement.mainoverlay).style.background = "linear-gradient(265deg, #20472ABD 0%, #20472AFA 63%)";
+                this.config.spplayingcolor = "#b9075e";
+            }else if (theme == "themeAura") {
+                //#001FB0E0 at 0% to #F24B29E0 at 100% at 45 degrees
+                console.log("[YAMILISTEN] Changing theme to Aura");
+                document.querySelector(this.appElement.mainoverlay).style.background = "linear-gradient(45deg, #001FB0E0 0%, #F24B29E0 100%)";
+                this.config.spplayingcolor = "#ca0a7878";
+            }else{
+                console.log("[YAMILISTEN] Changing theme to Aura (Default)");
+                document.querySelector(this.appElement.mainoverlay).style.background = "linear-gradient(45deg, #001FB0E0 0%, #F24B29E0 100%)";
+                this.config.spplayingcolor = "#ca0a7878";
+            }
+            //Save the theme to indexedDB
+            this.setAppData('theme', theme);
+        }
+
+
 
         async refresh() {
             this.data.lastData = this.data.recenttracks;
@@ -474,6 +551,9 @@ class yaminowplaying {
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[0].textContent = "SUPPORTER II";
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[1].textContent = "ขอบคุณที่เป็นส่วนหนึ่งของการสนับสนุน​";
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[2].textContent = "ภาพปกโปรไฟล์ของคุณจะเป็นพื้นหลังของหน้าจอนี้​";
+                // Show supporter setting button
+                this.showPart(this.part.supporterbtn);
+
                 // Show the supporter part
                 this.showPart(this.part.supporter);
                 // Set the bg of .main-app-yplay to cover image (Overlay not the bg)
@@ -485,8 +565,9 @@ class yaminowplaying {
                 //Set text in supporter part
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[0].textContent = "SUPPORTER I";
                 document.querySelector(this.part.supporter).querySelectorAll("h2")[1].textContent = "ขอบคุณที่เป็นส่วนหนึ่งของการสนับสนุน​";
-                document.querySelector(this.part.supporter).querySelectorAll("h2")[2].textContent = "<3​";
+                document.querySelector(this.part.supporter).querySelectorAll("h2")[2].textContent = "คุณสามารถเปลี่ยน Theme ของ WAYL ได้​";
                 this.showPart(this.part.supporter);
+                this.showPart(this.part.supporterbtn);
             }
             console.log("[YAMILISTEN] Welcome " + data.name + "!" + " (Data is valid)");
             this.validYamiToken = true;
@@ -897,7 +978,7 @@ class yaminowplaying {
                 }
                 //Highlight the box if currently listening
                 if (updatedEpoch == 0) {
-                    box.style.backgroundColor = "#ca0a7878";
+                    box.style.backgroundColor = this.config.spplayingcolor;
                     //Change icon of .icon-time.querySelector("i") to play icon
                     box.querySelector(".icon-time").querySelector("i").classList.remove("fa-clock");
                     box.querySelector(".icon-time").querySelector("i").classList.add("fa-play");
