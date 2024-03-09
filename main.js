@@ -744,7 +744,15 @@ class yaminowplaying {
 
         async getRecentTracks(username,raw=false,limit=1) {
             try {
-                const response = await fetch(this.data.lastfmpath + this.data.lastfmsubpath.recenttracks + username + "&api_key=" + this.data.apikey + "&format=json" + "&limit=" + limit);
+                //From 1 week ago from Friday at 00:00:00
+                const currentDate = new Date();
+                const daysUntilPreviousFriday = (currentDate.getDay() + 7 - 5) % 7;
+                const previousFriday = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - daysUntilPreviousFriday);
+                previousFriday.setHours(0, 0, 0, 0);
+
+
+
+                const response = await fetch(this.data.lastfmpath + this.data.lastfmsubpath.recenttracks + username + "&api_key=" + this.data.apikey + "&format=json" + "&limit=" + limit+"&extended=1&from=" + previousFriday.getTime() / 1000);
                 if (!response.ok) {
                     throw new Error(`[YAMILISTEN] HTTP error! status: ${response.status}`);
                 }
@@ -954,7 +962,7 @@ class yaminowplaying {
                 let currentTotalScrobble = box.querySelector(".nowplay-extra").querySelector("h2").textContent;
 
                 let updatedTitle = this.data.recenttracks[username]["track"][0]["name"];
-                let updatedArtist = this.data.recenttracks[username]["track"][0]["artist"]["#text"];
+                let updatedArtist = this.data.recenttracks[username]["track"][0]["artist"]["name"];
                 let updatedAlbum = this.data.recenttracks[username]["track"][0]["album"]["#text"];
                 let updatedImage = this.data.recenttracks[username]["track"][0]["image"][3]["#text"] || this.data.recenttracks[username]["track"][0]["image"][2]["#text"] || this.data.recenttracks[username]["track"][0]["image"][1]["#text"] || this.data.recenttracks[username]["track"][0]["image"][0]["#text"];
                 let updatedImageURL = updatedImage.replace(/url\((['"])?(.*?)\1\)/gi, '$2').split(',')[0];
@@ -1218,9 +1226,9 @@ class yaminowplaying {
             let trackImage = this.getCurrentLastfmTrackImage(username);
             let albumImage = this.getCurrentLastfmAlbumImage(username);
             let artistImage = this.getCurrentLastfmArtistImage(username);
-            let altArtistImage = await this.getArtistAlternative(this.data.recenttracks[username]["track"][0]["artist"]["#text"]);
+            let altArtistImage = await this.getArtistAlternative(this.data.recenttracks[username]["track"][0]["artist"]["name"]);
             let altArtistImageURL = altArtistImage['alt_artistimage'];
-            let youtubeSongInfo = await this.getYoutubeSongInfo(this.data.recenttracks[username]["track"][0]["name"],this.data.recenttracks[username]["track"][0]["artist"]["#text"]);
+            let youtubeSongInfo = await this.getYoutubeSongInfo(this.data.recenttracks[username]["track"][0]["name"],this.data.recenttracks[username]["track"][0]["artist"]["name"]);
 
 
             // Set youtube url
